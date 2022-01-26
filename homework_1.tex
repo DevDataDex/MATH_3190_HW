@@ -1,0 +1,152 @@
+\documentclass[11pt]{article}
+\usepackage{geometry}                % See geometry.pdf to learn the layout options. There are lots.
+\geometry{letterpaper}                   % ... or a4paper or a5paper or ... 
+%\geometry{landscape}                % Activate for for rotated page geometry
+%\usepackage[parfill]{parskip}    % Activate to begin paragraphs with an empty line rather than an indent
+\usepackage{graphicx,hyperref}
+\usepackage{amssymb}
+\usepackage{epstopdf}
+\usepackage{MnSymbol,wasysym}
+\DeclareGraphicsRule{.tif}{png}{.png}{`convert #1 `dirname #1`/`basename #1 .tif`.png}
+
+\title{MATH 3190 Homework 1}
+\author{Essential Tools for Data Science (due 1/26/22)}
+\date{1/15/22}                                           % Activate to display a given date or no date
+
+\begin{document}
+\maketitle
+
+\subsection*{Advanced Unix Tools}
+Most Unix implementations include a large number of powerful tools and utilities. (Unix has been in development for more than 50 years!). We were only able to scratch the surface in our class time. It will take time to become comfortable with Unix, but as you struggle, you will find yourself learning just by looking at \texttt{man} files and finding solutions on the internet. For this HW, you will explore several more advanced Unix functions. You can use any resource available to you--classmates, the internet, and Dr. Johnson. Ask all the questions you want, just make sure you do the work and you learn! 
+
+\begin{enumerate}
+	\item Learn about the \texttt{tar} function. What is a tarball? How is it different from a .zip file? Download the HW1.tar.gz file from Canvas and unzip the contents, and report that code you used. How effective is the compression for this tarball? After you complete Question \ref{cbball}, add the basketball data to the directory and generate a gzipped tarball for all the HW1 data (plus the basketball data) and provide the code you used. 
+	
+	A tarball is jargon for a TAR archive. The unix command creates this single file archive from many different files. A .tar archive is different from a .zip file because it does not automatically compress the files, but can be compressed provided an extra step is taken. 
+	
+	The code I used to unzip the file was: \texttt{tar -xvf HW1.tar.gz} 
+	
+	The .tar.gz file takes about 257 kb and the sum total of the files inside are about 838 kb. Thus, the tar.gz compressed the files to about 30\% of their capacity. 
+	
+	The code I used to generate a gzipped tarball is: \texttt{tar -czvf HW1.tar.gz HW1}
+	
+	\item \label{cbball} Learn more about tools for downloading files from external servers (e.g., \texttt{scp}, \texttt{ftp}, \texttt{sftp}, \texttt{rsync}), and for to downloading data from webpages (e.g., \texttt{curl}, \texttt{wget}, \texttt{mget}). Use an appropriate function to download the scores for all college basketball games for the 2021-2022 season (\href{http://kenpom.com/cbbga22.txt}{http://kenpom.com/cbbga22.txt}). Give the code you used to download these data.
+	
+	scp: secure copy - copies files between hosts on a network
+	
+	ftp: file transfer protocol - connects to an external server. Has certain commands that only work inside the ftp. Operations happen over an encrypted ssh.
+	
+	sftp: secure file transfer program - similar to ftp
+	
+	rsync: faster, more options replacement for rcp (doesn't exists anymore). Transfers only the differences between two sets of files across a network.  
+	
+	curl: transfer a URL - transfers data from or to a server
+	
+	wget: downloads files from the web using HTTP HTTPS and FTP protocols.
+	
+	mget: retrieves multiple files from a remote server directory and store them in the working directory. 
+	
+	The code I used to download the data: \texttt{wget "http://kenpom.com/cbbga22.txt"} 
+	
+	
+	\item Research the \texttt{chmod} function. Give short explanation of what this function does, its syntax, and examples when you would use it. Practice \texttt{chmod} by changing the permissions on the `TB\_microbiome\_data.txt' file in the HW1 directory from the previous questions. Give examples of the code you used and show that the code works (e.g., use \texttt{ls -l}). 
+	
+	chmod: (change mode) change file modes or Access Control Lists - changes the permissions (modes) that each file is under. The syntax is chmod followed by 1 to 4 octal digits (4,2,1). The first digit selects an ID, the second permissions for file owner, third file's group, and fourth, anyone. The numbers 4,2,1 in the last three spots represent read, write, and execute respectively.
+	
+	These numeric expressions can be written in a different way. chmod [u|g|o] = {r,w,x}, where the letters represent 'user','group','others' and 'read','write','execute'. 
+	
+	You would use this function when working collaboratively, and group permissions need to change throughout the project. I can also see it being used when someone leaves a job, and they need to give all file permissions to a new user.  
+	
+	I had played around with it for a bit so I used this function: \texttt{chmod u=rwx,g=,o= TB\_microbiome\_data.txt} to initialize the permissions as \texttt{-rwx------@} (Only the user can read, write and execute). I then used this command \texttt{chmod u=rw,g=r,o=rx TB\_microbiome\_data.txt} to change the permissions to \texttt{-rw-r--r-x@} (user can read and write only, group can read only,and others can read and execute only).
+	
+	\newpage
+	
+	\item The \texttt{grep} function is an extremely powerful tool for search (potentially large) files for patterns and strings. One advantage is that you don't have to open the file to conduct a search! Using the internet, find a short tutorial on the basics of \texttt{grep}, and give the code and results for the following tasks: 
+		\begin{enumerate}
+		\item How many games has SUU played so far this season? (hint: search for `Southern Utah' in the file) \\
+		\texttt{grep -c "Southern Utah" cbbga22.txt }
+		\\ 15
+		\item How many games have been played by teams other than SUU? (i.e., inverse search) \\
+		\texttt{grep -vc "Southern Utah" cbbga22.txt} \\
+		3194
+		\item What was the score when SUU played Dixie St.? How many games had SUU played before that game? (i.e., add line numbers to the result) \\
+		\texttt{grep "Southern Utah" cbbga22.txt|grep -n "Dixie" }
+		
+		Southern Utah has played Dixie twice this season. The first time was their second game (1 game before) and the score was SUU 76 - Dixie 83. The second game was the twelfth game (11 games before) of the season and the score was SUU 87 - Dixe 59. 
+		
+		\item How many coronavirus genomes are present in the `virus.fa' file? How many of these are SARS-COV-2? 
+		
+		\texttt{grep "coronavirus" viral.fasta}
+		\\
+		This search brought up three rows that contain the word "coronavirus." One of these is the SARS coronavirus Tor2, which I believe is the same as SARS-COV-2. 
+		
+		\item How many times does the letter `A' (capital or lowercase) appear in all the files from the HW1 tar file plus the college basketball data? (i.e., ignore case).
+		
+		\texttt{grep -rio "a" * | wc -l}\\
+		The letter 'A' appears 237,539 times in all of the listed files. 
+		
+		\item What {\it Staphylococcus} species are present in the `TB\_microbiome\_data.txt' file? (hint: each separate microbe has its own row in the file). Print out the counts for {\it Mycobacterium tuberculosis}. How many {\it Streptococcus} species are present? \\
+		\texttt{grep -c "Staphylococcus" TB\_microbiome\_data.txt} \\
+		There are 4 {\it Staphylococcus} species in the `TB\_microbiome\_data.txt' file. \\
+		\texttt{grep -c "Mycobacterium tuberculosis" TB\_microbiome\_data.txt}\\
+		1\\
+		\texttt{grep -c "Streptococcus" TB\_microbiome\_data.txt}\\
+		There are 16 {\it Streptococcus} species in the file. 
+		
+		\end{enumerate}
+		
+	\newpage	
+	\item Learn how to use \texttt{less} to display large text files in the terminal using the \texttt{man} help page. Using the ``OPTIONS" section of the \texttt{man} page, open the `virus.fa' file to display so that it does not wrap long lines (default), displays line numbers, and opens at the first occurrence of `coronavirus'. Provide the command you used to open the file in this way. Within \texttt{less}, learn and practice how to scroll forward/backward, scroll forward/backward $n$ lines, jump to the middle or end of the file, and search for text in the document. When would it be advantageous to use \texttt{less} over a tool like Microsoft Word? Ask Dr. Johnson why in Unix \texttt{more} is less and \texttt{less} is more \smiley{}.
+	
+	\texttt{less -Np"coronavirus" viral.fasta}
+	
+	I can verify I practiced moving around the file. I see that \texttt{less} can be more advantageous than Word for working in incredibly large files. Word will not let you work with the file until it is all open, while with \texttt{less} you can work with only parts of the file open. Word also isn't really nice for long rows (gets messy when things wrap), but \texttt{less} is a lot cleaner and easier to navigate.  
+	
+	In class you told us that the first function was \texttt{more}, and that it would display the whole file. This caused lots of problems for very large files. The function \texttt{less} was made to only display part of the file at a time, along with many more options. Thus, \texttt{more} is less because it doesn't have the adaptability that \texttt{less} does that makes it more.  
+	
+	\item Open a text file in \texttt{vim} and change the file. How do you move the beginning/end of a line, insert text, copy and paste, delete text and lines? How do you save your file or exit \texttt{vim} with/without saving your result? What are the advantages and disadvantages of \texttt{vim} versus \texttt{less}? In which scenarios would you use each of these? 
+	
+	You can move the beginning of a line by pressing '0' and the end of a line by pressing \$. You can move to the end of a document by pressing 'G' and the beginning of a document by pressing 'gg'. \\ 
+	You can insert text by entering the editing mode by pressing 'i' after running \texttt{vim} on a file. \\
+	These commands have their own syntax in \texttt{vim}, copy is yank (y), cutting is called delete (d),  and paste is called put (p). Yanking and deleting have more options. Once a line is yanked or deleted it can be pasted where the cursor is placed by pressing 'p.'\\
+	Typing ":wq!" will exit \texttt{vim} and save your changes, while typing ":q!" exits without saving your changes. \\
+	The command \texttt{vim} is good if you want to be able to edit documents in the terminal. It is also good if you want to copy part of the file and place it somewhere else. Unlike \texttt{less} though, vim will open the whole document at the same time, and may take more time if the document is huge. The command \texttt{less} is good if you want to view the file without editing it.  
+	
+	\newpage
+	
+	\item Learn about \texttt{pipes} and \texttt{redirects} in Unix. In which scenarios would you use them, and why are they helpful? describe what the following commands do:
+	
+	Pipes take the output of the previous command and use it as the input of the next command. Redirects take the output of a command and save it as an executable in the directory. 
+	\begin{enumerate}
+		\item \texttt{ls -l | less} \\ Opens the output of ls -l (more information on each file in the directory) is a less window (options to move page by page). 
+		\item \texttt{ls -l > directory\_contents.txt} \\ Saves the output of ls -l in a file called \texttt{directory\_contents.txt}. If the file already exists it will be replaced. 
+		\item \texttt{ls -l >> directory\_contents.txt} \\ Same as above, however, if the file already exists then the output will be appended to the already existing file. 
+		\item \texttt{cat directory\_contents.txtt | head -3 | tail -2} \\ (I hope the extra 't' in '.txtt' is a typo). Displays rows 2 and 3 of the \texttt{directory\_contents.txt} file. 
+		\item \texttt{ls | grep -c html} \\ Counts the number of .html files in the working directory.
+		\item \texttt{ls | wc -l} \\ Counts the number files (directories and executables) in the working directory. 
+		\item \texttt{cat file1.txt file2.txt > file3.txt} \\ Concatanates file1.txt and file2.txt together and saves in file3.txt (replaces if it already exists). 
+	\end{enumerate}
+	You can also us pipes in R! Investigate how to do this and give the code for a great example. \\
+	
+	This code reads is a data file and immediately filters it. \\
+	\texttt{superbowl\_foodads <- read.csv("superbowlads.csv") \%>\% filter(fooddrink == 'Yes')}
+	
+	\item Learn about another Unix command that we have not discussed. Give a short description of this function, when you would use it, its syntax, and give some examples of its use.
+	
+	The command \texttt{cut} can be used to select columns from a data set. This is useful if a data set has many fields (columns), but you are only interested in a select few. \\
+	Syntax: \texttt{cut -f [column numbers] -d [deliminator] [filename]}\\
+	Example: \texttt{cut -f 5-8 -d , superbowlads.csv | less}
+	
+	
+	\item You need to complete the following two tasks for the Git and GitHub lecture: 
+	\begin{enumerate}
+		\item Fork the \href{https://github.com/wevanjohnson/my.package}{https://github.com/wevanjohnson/my.package} directory and clone it to your local machine. Then add your name as an author in the DESCRIPTION file local repository and add a multiplication function to the R package (R folder). Then push the changes to your GitHub fork, and send me a pull request with your changes.  
+		\item Set up a git repository for this HW assignment on your computer (repo named ``MATH\_3190\_HW"), add files/changes to it, and upload it to GitHub. This is how you will turn in your HW for this semester! (including this one!). 
+	\end{enumerate}. 
+
+\end{enumerate}
+
+
+
+\end{document}
+ 
