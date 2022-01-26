@@ -1,1 +1,2 @@
-# MATH_3190_HW
+# Devin Warner's Homework 
+# MATH 3190 - Fundamentals of Data Science
