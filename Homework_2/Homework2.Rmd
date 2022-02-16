@@ -1,0 +1,350 @@
+---
+title: "Homework_2"
+author: "Devin Warner"
+date: "2/9/2022"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(lubridate)
+```
+
+## Question 1 {.tabset}
+
+Learn more about the **scan, readLines, read_html, readr,** and **readxl** functions for getting data into R. Also, dowload the http://kenpom.com/cbbga22.txt data into a tibble using R. How are these different from the functions we learned in class? Report what you find and give some examples! 
+
+### scan
+The **scan** function reads data into a vector or a list from the file or the R console. 
+
+```{r scan_1}
+# Usage
+# scan(file = "", what = double() , sep = "", skip = 0)
+```
+_file_: The name of the file to be read relative to the current working directory. If no file name is given the scan will read in input from the console. 
+
+_what_: give the type of data to be read. Supported types are _logical_, _integer_, _numeric_, _complex_, _character_, _raw_, and _list_. The syntax for reading in a _list_ is:
+```{r scan_2}
+# scan(file = "filename.txt", what = list("","",""))
+```
+This will create a list with three elements.
+
+_sep_: Indicate the separator (comma for .csv files).
+
+_skip_: The number of lines to be skipped at the beginning before reading in the data. Most often _skip = 1_ is used to not include headers.  
+
+### readLines
+Read some or all text lines from a connection. Returns a character vector.
+```{r readLines_1}
+# Usage
+# readLines(con = stdin(), n = -1L, ok = TRUE, warn = TRUE,
+#           encoding = "unknown", skipNul = FALSE)
+```
+_con_: A connection object (file or URL) or a character string
+
+_n_ = Max number of lines to read. A negative number indicates lines from the end of the document (defaults -1, or last line). 
+
+_ok_: Is it okay to reach the end of the connection before reaching _n_?
+
+_warn_: Give a warnings for missing a final EOL or any embedded nuls. 
+
+_encoding_: Encoding to be assumed for input strings, such as Latin-1 or UTF-8. 
+
+_skipNul_: Should nulls be skipped? 
+
+### read_html
+Read in the content from a .html file. Returns a character vector.
+```{r html_1}
+# Usage
+# read_html(file, skip = 0, remove.empty = TRUE, trim = TRUE, ...)
+```
+_file_: The path to the .html file
+
+_skip_: The number of lines from the beginning to skip
+
+_remove.empty_: If TRUE, empty elements in the vector are removed.
+
+_trim_: If TRUE, removes leading and trailing spaces. 
+
+### readr
+A package that is part of the _tidyverse_. A fast and friendly way to read rectangular data (.csv, .tsv, .fwf). Includes the functions **read_table**, **read_csv**, **read_tsv**, **read_delim**, **read_fwf**, and **read_log**,  which are faster and more versatile replacements of the base R functions **read.table**, and **read.csv**, etc. They have the same functionality as the base R functions, with some added perks. 
+
+Unlike the base R functions which return dataframes, these read functions return a tibble. One of the benefits of the readr package is that these functions can read zipped files without using another function to unzip them. When reading the file, if the function has problems it will throw a warning rather than treating it as a fatal error. You can also include the argument _col_types = ""_ to specify the data types in each column. For example: 
+```{r readr_1}
+# read_csv("filename.csv", col_types = "ccici", nmax = 10)
+```
+will read in the .csv file that has 5 columns where columns 1,2 and 4 are character types, and columns 3 and 5 are integer types. The _nmax_ argument in this case will read in the first 10 rows of data. 
+
+### readxl
+
+Another package that is part of the tidyverse. This package is designed to help import and navigate excel files, both with extension _.xls_ and _.xlsx_. Like the readr package, these functions return a tibble rather than a dataframe. Examples of functions in the _readxl_ library are:
+```{r readxl_1}
+## Read in excel file
+# read_excel(path, sheet = NULL, range = NULL, col_names = TRUE, col_types = NULL, na = "", ...)
+
+## Displays sheet names
+# excel_sheets(data)
+
+## Load in example excel files from the package
+# readxl_example()
+```
+Remember, the path argument is relative to the current working directory (it may be a good idea to start all paths4 as _cd ~/_ to ensure you get the right file regardless of your current directory). The _range = NULL_ argument accepts input similar to that in an excel sheet, like _"A1:C5"_ or _"sheet!B5:C256"_. You can also specify rows or columns using _cell_rows(a:b)_ and _cell_cols(X:Y)_. The _na = ""_ argument is used if a null value is represented by anything other than a black cell, and is defaulted with blank.
+
+### Read in College Basketball Data
+```{r bb, echo = TRUE}
+cbb_data <- read_fwf(file = url("http://kenpom.com/cbbga22.txt"), col_positions = fwf_widths(c(11,23,4,23,4,3,22),c("date","home","score1","vis","score2","ufo1","ufo2")), col_types = "ccicicc")
+head(cbb_data)
+```
+
+## Question 2 {.tabset}
+
+Learn about the **S3**, **S4**, and **R6** classes in R. When do you think you would use these? Describe what you learned and give some examples! 
+
+### S3
+An **S3** object is a list in which its elements are the required components of the class as well as an attached class attribute. Compared to the other classes, **S3** is the least strict in its implementation. A good way to make sure all of your objects are uniform is to create a function that accepts the object parameters, checks if they are valid, and returns an error or the object depending on the result.
+
+```{r student_class}
+# Function to create an S3 object for students
+student <- function(name, tnum, major, gpa){
+  if(gpa > 4 || gpa < 0){
+    stop("GPA must be between 0 and 4")
+  }
+  obj <- list(name = name, t_number = tnum, major = major, gpa = gpa)
+  class(obj) <- "student"
+  obj
+}
+
+# Create myself as a student object 
+student("Devin Warner", "T01023127", "Applied Mathematics", 3.94)
+
+# Test error checking 
+# student("Devin Warner", "T01023127", "Applied Mathematics", 7.20)
+# >> GPA must be between 0 and 4
+```
+As in other coding languages, methods respond differently to different classes of object. For example, the default print method in R will print string objects and vector objects differently. When we create new **S3** objects we can define our own methods for them as follows:  
+
+```{r new_print}
+# Create a new print method for student
+print.student <- function(stu){
+  cat(stu$name, "\n")
+  cat(stu$major, "\n")
+  cat(stu$t_number, "\n")
+  cat(stu$gpa, "\n")
+}
+
+# Create and print a student object
+exp <- student("Devin Warner", "T01023127", "Applied Mathematics", 3.94)
+exp
+
+```
+We can also create new functions by first creating a new default method, and then creating methods based off the default for our objects. 
+
+We can also define inheritance for **S3** objects: 
+```{r s3_inheritance}
+# Create and print an international student object
+exp1 <- list(name = "Arthur Williams", t_number = "T000111222", major = "Marketing", gpa = 3.99, country = "Brazil")
+class(exp1) <- c("InternationalStudent", "student")
+exp1
+
+# Overwrite print method
+print.InternationalStudent <- function(stu){
+  cat("The student", stu$name, "is from", stu$country, ".\n")
+}
+
+# Check new print method
+exp1
+```
+
+To give credit where its due, my examples are similar to those from the website "https://www.geeksforgeeks.org/r-inheritance/#:~:text=Inheritance%20in%20S3%20Class,methods%20from%20its%20base%20class"
+
+### S4
+
+The **S4** class is much stricter than the **S3** class, and is much similar to other languages object oriented structure. To create an **S4** object you must use the _setClass_ and _new_ functions. 
+```{r game_class}
+# Define a new class object with child
+setClass("Shape", representation(name = "character"))
+setClass("Polygon", representation(sides = "numeric"), contains = "Shape")
+setClass("Square", representation(length = "numeric"), contains = "Polygon")
+
+# Define a new S4 object
+unit_square <- new("Square", name = "UnitSquare", sides = 4, length = 1)
+unit_square
+```
+As you can see, rather than attributes of the object being elements of a list, each attribute is called a "slot" in the object. When creating new **S4** objects, each slot much be of the correct type or else an error will be thrown. If an attribute is missing in the initialization, then it is automatically set to the default value for that class ('', 0, etc). To access individual slots of an object we use '@' rather than '$'. 
+```{r slot1}
+unit_square@sides
+```
+You can check what slots an object has using the _getSlots(obj)_ function, and you can check what class an object is using the _is(obj)_ function.
+
+**Maybe some stuff about methods**
+
+To give credit where it is due, these examples are similar to those found on the website "http://adv-r.had.co.nz/S4.html"
+
+### R6
+
+While the **S3** and **S4** classes come in standard R, the **R6** class comes from a library. A new feature of the **R6** class is that it supports public and private methods. 
+
+
+
+## Question 3 {.tabset}
+
+### a
+```{r a}
+cbb_data <- cbb_data %>% mutate(location = home) %>% mutate(score_diff = score1 - score2)
+head(cbb_data)
+```
+### b
+```{r b}
+cbb_data <- arrange(cbb_data, location)
+head(cbb_data)
+```
+### c
+```{r c}
+cbb_data <- select(cbb_data, -c("ufo1", "ufo2"))
+head(cbb_data)
+```
+### d
+```{r d1}
+cbb_data$date <- mdy(cbb_data$date)
+cbb_2022_data <- cbb_data %>% filter(year(date) == 2022)
+head(cbb_2022_data)
+```
+
+```{r d2}
+# Write the function
+team_filter <- function(team){
+  x <- cbb_data %>% filter(home == team | vis == team)
+  return(x)
+}
+
+# Test the function
+team_filter("Southern Utah")
+```
+### e
+```{r e1}
+# Calculate win percentage for given team
+team_win_record <- function(team, text = 0){
+  X <- team_filter(team)
+  tot_games <- X %>% summarise(n = n()) %>% pull()
+  wins <- X %>% filter((home == team & score_diff > 0) | (vis == team & score_diff < 0)) %>% summarise(n()) %>% pull()
+  if(text == 1){
+    cat(team, "has won", wins, "of there", tot_games, "games, for a win percentage of", round(wins/tot_games * 100, digits = 2), "%. \n")
+  }else{
+    c(wins, tot_games, round(wins/tot_games * 100, 2))
+  }
+}
+
+# Testing function
+team_win_record("Southern Utah", 1)
+team_win_record("Northern Arizona", 1)
+```
+
+```{r e2}
+# Tibble of all teams win record
+all_teams_records <- function(){
+  team_names <- tibble(append(cbb_data$home,cbb_data$vis)) %>% distinct()
+  teams_tibble <- tibble(team = character(), wins = integer(), total_games = integer(), win_percentage = numeric())
+  for(i in 1:nrow(team_names)){
+    x <- pull(team_names)[i]
+    X <- team_win_record(x)
+    teams_tibble <- teams_tibble %>% add_row(team = x, wins = X[1], total_games = X[2], win_percentage = X[3])
+  }
+  teams_tibble
+}
+
+
+ranked_teams_tibble <- all_teams_records() %>% arrange(-wins)
+head(ranked_teams_tibble)
+```
+
+## Question 4 
+Create an R package that contains your functions from the previous problem. Make sure to properly annotate your code and add some unit tests. 
+
+Below is the code I used to create the package. I will upload the package onto github as part of the submission of the assignment, rather than having this code create it on your own computer. 
+```{r build_package, eval = F, echo = T}
+# Create Package
+setwd("~/Desktop/github")
+devtools::create("devinwcbb")
+
+# Set licensing
+setwd("~/Desktop/gihub/devinwcbb")
+usethis::use_mit_license()
+
+# Here I placed each function from Question 3 in its own file with proper documentation and saved them to the package.
+
+# Upload Documentation
+devtools::document()
+
+# Load Package
+devtools::install()
+library(devinwcbb)
+
+# Check functions
+?get_cbb_data
+?all_teams_records
+```
+
+
+## Question 5 {.tabset}
+
+Walk step by step through the K means shiny app tutorial. Run the code to launch the app at each step. Document what changes are made in each step (which functions are used, what they do in the app). Now, make a K means R package with at least two functions (e.g., one that calculates the clusters, one that plots the result). Make sure to document your functions and create unit tests. Change the shiny app to rely on your functions, and add the shiny app to your inst/ directory in your package. Post your R package as a repository on GitHub.
+
+### 00
+
+This step sets up the basic structure of the Shiny app. Builds the variable ui and function server. The variable ui is a fluidPage object with parameters for a title, side panel, and main panel. The server function is built to accept input, output and session, but is otherwise left blank. Lastly, the function shinyApp is run which accpets ui and server as inputs. When run, there is a grayed out box in the top left corner, which I believe is the side panel. 
+
+### 01
+
+This step adds a title using the titlePanel() function in the ui creation. When run the title "k-means clustering" is added above the side panel. 
+
+### 02
+
+This step fills in the sidebar panel. There are three different select options placed in the sidebar, each seperated with a comma. The selectInput function has the form selectInput(variable name, name shown on ui, options to choose from, default starting). The numericInput function has the form numericInput(variable name, name shown on ui, default starting, min, max). When run, the sidebar is filled with two drop down selection menus for x and y variables, and a text box to enter numeric values. 
+
+### 03
+
+This step adds plotOutput('plot1') to the main panel function. When run, nothing new is shown because plot1 has not been defined. 
+
+### 04
+
+This step defines plot1 in the server function. It is created using the base plot function inside of renderPlot. The plot that is created defaults the xcol to Sepal.Length and ycol to Sepal.Width. When run, the plot is shown, but the axis cannot be changed.
+
+### 05
+
+Switches the default xcol and ycol for dynamic versions using input\$xcol and input\$ycol in the plot function. When run, the axis on the plot can now be changed using the selectors in the side panel. 
+
+### 06
+
+A color variable was added to the plot function. The color is based off of the results of a k-means function that dynamically changes with xcol, ycol, and clusters from the ui input. When run, the points on the plot now have colors corresponding to their clusters. When you change the cluster value, the number of colors (clusters) on the plot changes.    
+
+### 07
+
+Inside the renderPlot function, but seperate from the plot function, a points function is run that grabs the cluster centers from the same k-means run in the plot function. When run, X's are placed on the plot to represent the cluster centers. 
+
+### 08
+
+This step outputs the same thing, but rather than running k-means twice, it runs it once, saves it as the variable __clusters__, and this is used in twice in the renderPlot function.  
+
+### 09
+
+Again, for simplicity, rather than writing iris[,c(xcol,ycol)] over and over again, this output is saved to a variable __selectedData__ which is then used in the other function. Also adds some parameters to renderPlot to give it good margins and colors. 
+
+```{r, kmeans_pkg, eval = F, echo = T}
+setwd("~/Desktop/github/dshw/Homework_2")
+devtools::create("devinwkmeans")
+
+setwd("~/Desktop/github/dshw/Homework_2/devinwkmeans")
+usethis::use_mit_license()
+
+# Create functions and place in R directory
+
+# Upload Documentation
+devtools::document()
+
+# Load Package
+devtools::install()
+library(devinwkmeans)
+```
