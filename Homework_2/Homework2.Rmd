@@ -187,7 +187,16 @@ To give credit where it is due, these examples are similar to those found on the
 
 While the **S3** and **S4** classes come in standard R, the **R6** class comes from a library. A new feature of the **R6** class is that it supports public and private methods. 
 
+I feel like I've written a lot already. So as a benefit to myself here is the link where I learned about how to initialize R6 objects and methods. 
 
+https://r6.r-lib.org/articles/Introduction.html
+
+
+# Summary of Classes
+
+I've been trying to wrap my mind around why you would want to use an object oriented approached to coding in R. From what I understand about each of object type is that it is another way to store data about an observation. In R though I believe it is easier to do this in a data frame where the rows are observations (a set of the same object), and the columns are the attributes of the object. To me the one added benefit of object classes is that objects can have methods that work only for that object. 
+
+After working though the homework I see that a good place to use these object classes may be in shiny interfaces. Because it is a reactive environment, each piece of that environment is its own object with its own attributes and methods. I can't think in depth how this might work, but its the start of an idea. 
 
 ## Question 3 {.tabset}
 
@@ -242,7 +251,8 @@ team_win_record("Southern Utah", 1)
 team_win_record("Northern Arizona", 1)
 ```
 
-```{r e2}
+This next block of code takes longer to run when knitting the markdown. You can view the output table using the shiny app in the __devinwcbb__ package. 
+```{r e2, eval = F, echo = T}
 # Tibble of all teams win record
 all_teams_records <- function(){
   team_names <- tibble(append(cbb_data$home,cbb_data$vis)) %>% distinct()
