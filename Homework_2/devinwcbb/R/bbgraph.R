@@ -20,7 +20,7 @@ bbgraph <- function(data, team = NULL) {
     data <- data %>% team_filter(team)
     data$ishome <- as.factor(ifelse(data$home == team, 1, 0))
     g <- data %>% ggplot(aes(x = score1, y = score2, col = ishome))
-    g + geom_point() + labs(
+    g + geom_point() + geom_abline() + labs(
       x = "Home Score",
       y = "Visiting Score",
       title = cat(team, "Basketball Scores")

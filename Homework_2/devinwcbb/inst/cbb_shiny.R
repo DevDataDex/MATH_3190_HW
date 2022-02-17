@@ -1,23 +1,41 @@
-library(shiny)
-library(tidyverse)
-library(devinwcbb)
+data <- get_cbb_data()
 
 ui <- fluidPage(
   
-    titlePanel("College Basketball Data"),
+    # titlePanel("College Basketball Data"),
   
-    fluidRow(
-      column(12,
-           tableOutput("table1")
+    sidebarLayout(
+      
+      sidebarPanel(
+        selectInput('team', 'Teams', team_list(data), 
+                    selected = "Southern Utah")
+      ),
+      
+      mainPanel(
+        plotOutput("plot1")
+      )
+      
     )
-  )
+    
+    # fluidRow(
+    #   column(12,
+    #        tableOutput("table1")
+    #   )
+    # )
+    
+    
   
 )
 
 server <- function(input, output, session) {
   
-  output$table1 <- renderTable(all_teams_records(data))
-                             
+  team <- reactive({input$team})
+  
+  # output$table1 <- renderTable(all_teams_records(data))
+  
+   output$plot1 <- renderPlot({
+       bbgraph(data, team())
+     })                        
 }
 
 shinyApp(ui = ui, server = server)
