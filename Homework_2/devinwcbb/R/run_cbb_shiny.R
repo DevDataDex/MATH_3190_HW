@@ -4,6 +4,9 @@
 #'
 #' @export
 #'
+library(tidyverse)
+library(lubridate)
+library(DT)
 
 run_cbb_shiny <- function() {
   appDir <- system.file("cbb_shiny.R", package = "devinwcbb")

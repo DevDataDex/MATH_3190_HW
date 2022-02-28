@@ -18,11 +18,14 @@ bbgraph <- function(data, team = NULL) {
                             title = "Basketball Scores")
   } else{
     data <- data %>% team_filter(team)
-    data$Location <- as.factor(ifelse(data$home == team, "Home", "Visitor"))
-    data$Won <- as.factor(ifelse(((data$home == team) & (data$score_diff > 0)) | ((data$vis == team) & (data$score_diff < 0)),"Won","Loss"))
-    data %>% ggplot(aes(x = score1, y = score2, col = Won)) + 
-      geom_point(aes(shape = Location), size = 5) + geom_abline() +
-      labs(x = "Home Score", y = "Visiting Score", title = paste(team, "Basketball Scores"))
+    
+    data$team_score <- ifelse(data$home == team, data$score1, data$score2)
+    
+    data$opponent_score <- ifelse(data$home == team, data$score2, data$score1)
+    
+    data %>% ggplot(aes(x = team_score, y = opponent_score)) + 
+      geom_point(size = 5) + geom_abline() +
+      labs(x = paste(team, "Score"), y = "Opponent Score", title = paste(team, "Basketball Scores"))
   }
   
 }

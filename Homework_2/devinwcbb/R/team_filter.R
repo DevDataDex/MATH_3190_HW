@@ -13,6 +13,9 @@
 #' @examples
 #' team_filter(get_cbb_data(), "Southern Utah")
 #' team_filter(get_cbb_data(), "Northern Arizona")
+#' 
+#' 
 team_filter <- function(data, team) {
-  data %>% filter(home == team | vis == team)
+  data %>% 
+    filter(home == team | vis == team)[,1:5]
 }
