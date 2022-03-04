@@ -1,0 +1,29 @@
+---
+title: "Homework 3"
+author: "Devin Warner"
+date: "3/9/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## Question 1 (get your previous points!) 
+Keep working on your Shiny interfaces and packages! Complete any of the previous tasks you have not finished, and work to make your packages and interfaces better!
+
+## Question 2 (20 points) 
+Using the principles and guidelines from the data visualization lecture slides (we did not finish!), evaluate the plots in your Shiny interfaces (k means and basketball) and improve them! Also, add 3 more high-quality and highly-informative plots or tables to your interface. Use ggplot for all plots in the interface!
+
+**NOTE:** I think I should have kept a record of my progression, but I didn't other than my regular updates to github. 
+
+My first plot of Basketball Scores was very confusing because the team of interest could be represented on the x-axis (home) or y-axis (visitor). To make it easier to understand I altered the graph so the team of interest is always of the x-axis with their opponent on the y-axis. 
+
+I added a table of all of the games played by the team of interest to get a better visual of the game by game break down. Since there can be a lot of rows, I limited it to 10 rows at a time. 
+
+## Question 3 (20 points) 
+Finish going through the examples from the ggplot lecture. Confirm in your RMarkdown that you completed this task (on your honor!).
+
+On my honor, I completed the examples from the ggplot lecture. My updated RMarkdown can be found in my github under __Homework3/ggplot2_lecture/Exercises_ggplot2.Rmd__
+
+## Question 4 (20 points) 
+Go find 5 solid examples where statistics have been misused, misrepresented (graphs), or misinterpreted. Add the link or graph to the RMarkdown document, and describe what they did wrong. What should they have done differently? Which of the 12 data science principles did they violate?
