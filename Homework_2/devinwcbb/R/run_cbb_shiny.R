@@ -4,11 +4,11 @@
 #'
 #' @export
 #'
-library(tidyverse)
-library(lubridate)
-library(DT)
 
 run_cbb_shiny <- function() {
+  library(tidyverse)
+  library(lubridate)
+  library(DT)
   appDir <- system.file("cbb_shiny.R", package = "devinwcbb")
   if (appDir == "") {
     stop("Could not find myapp. Try re-installing `devinwcbb`.", call. = FALSE)

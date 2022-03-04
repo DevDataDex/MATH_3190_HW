@@ -600,7 +600,7 @@ team_filter &lt;- function(team){
 
 # Test the function
 team_filter(&quot;Southern Utah&quot;)</code></pre>
-<pre><code>## # A tibble: 24 × 7
+<pre><code>## # A tibble: 25 × 7
 ##    date       home               score1 vis           score2 location score_diff
 ##    &lt;date&gt;     &lt;chr&gt;               &lt;int&gt; &lt;chr&gt;          &lt;int&gt; &lt;chr&gt;         &lt;int&gt;
 ##  1 2021-11-09 Bethesda               74 Southern Utah    116 Bethesda        -42
@@ -608,12 +608,12 @@ team_filter(&quot;Southern Utah&quot;)</code></pre>
 ##  3 2022-02-05 Eastern Washington     72 Southern Utah     84 Eastern…        -12
 ##  4 2022-02-03 Idaho                  59 Southern Utah     75 Idaho           -16
 ##  5 2022-01-22 Idaho St.              74 Southern Utah     86 Idaho S…        -12
-##  6 2022-01-31 Northern Arizona       66 Southern Utah     78 Norther…        -12
-##  7 2022-01-01 Northern Colorado      91 Southern Utah     81 Norther…         10
-##  8 2022-01-17 Portland St.           76 Southern Utah     86 Portlan…        -10
-##  9 2021-12-30 Sacramento St.         51 Southern Utah     64 Sacrame…        -13
-## 10 2021-12-11 Saint Katherine        61 Southern Utah    100 Saint K…        -39
-## # … with 14 more rows</code></pre>
+##  6 2022-02-19 Montana St.            76 Southern Utah     71 Montana…          5
+##  7 2022-01-31 Northern Arizona       66 Southern Utah     78 Norther…        -12
+##  8 2022-01-01 Northern Colorado      91 Southern Utah     81 Norther…         10
+##  9 2022-01-17 Portland St.           76 Southern Utah     86 Portlan…        -10
+## 10 2021-12-30 Sacramento St.         51 Southern Utah     64 Sacrame…        -13
+## # … with 15 more rows</code></pre>
 </div>
 <div id="e" class="section level3">
 <h3>e</h3>
@@ -631,9 +631,10 @@ team_win_record &lt;- function(team, text = 0){
 
 # Testing function
 team_win_record(&quot;Southern Utah&quot;, 1)</code></pre>
-<pre><code>## Southern Utah has won 16 of there 24 games, for a win percentage of 66.67 %.</code></pre>
+<pre><code>## Southern Utah has won 16 of there 25 games, for a win percentage of 64 %.</code></pre>
 <pre class="r"><code>team_win_record(&quot;Northern Arizona&quot;, 1)</code></pre>
-<pre><code>## Northern Arizona has won 9 of there 25 games, for a win percentage of 36 %.</code></pre>
+<pre><code>## Northern Arizona has won 9 of there 26 games, for a win percentage of 34.62 %.</code></pre>
+<p>This next block of code takes longer to run when knitting the markdown. You can view the output table using the shiny app in the <strong>devinwcbb</strong> package.</p>
 <pre class="r"><code># Tibble of all teams win record
 all_teams_records &lt;- function(){
   team_names &lt;- tibble(append(cbb_data$home,cbb_data$vis)) %&gt;% distinct()
@@ -649,15 +650,6 @@ all_teams_records &lt;- function(){
 
 ranked_teams_tibble &lt;- all_teams_records() %&gt;% arrange(-wins)
 head(ranked_teams_tibble)</code></pre>
-<pre><code>## # A tibble: 6 × 4
-##   team              wins total_games win_percentage
-##   &lt;chr&gt;            &lt;dbl&gt;       &lt;dbl&gt;          &lt;dbl&gt;
-## 1 Murray St.          24          26           92.3
-## 2 Auburn              23          25           92  
-## 3 South Dakota St.    23          27           85.2
-## 4 Arizona             22          24           91.7
-## 5 Belmont             22          27           81.5
-## 6 Chattanooga         22          27           81.5</code></pre>
 </div>
 </div>
 <div id="question-4" class="section level2">
