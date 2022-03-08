@@ -16,7 +16,7 @@ ui <- fluidPage(
       mainPanel(
         plotOutput("plot1"),
         textOutput("text1"),
-        dataTableOutput("table1")
+        DTOutput("table1")
       )
       
     )
@@ -36,9 +36,13 @@ server <- function(input, output, session) {
        bbgraph(data, team())
      })  
   
-  output$table1 <- renderDataTable({
-      team_filter(data, team())
-  })
+  output$table1 <- renderDT(
+      team_filter(data, team()),
+      options = list(pageLength = 10, 
+                     bFilter = FALSE),
+      rownames = FALSE,
+      
+  )
 }
 
 shinyApp(ui = ui, server = server)
