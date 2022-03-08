@@ -8,18 +8,19 @@ ui <- fluidPage(
       
       sidebarPanel(
         selectInput('team', 'Teams', team_list(data), 
-                    selected = "Southern Utah")
+                    selected = "Southern Utah"),
+        textOutput("text1")
+        
       ),
-      
-      
       
       mainPanel(
         plotOutput("plot1"),
-        textOutput("text1"),
-        DTOutput("table1")
+       
       )
       
-    )
+    ),
+    
+    mainPanel( DTOutput("table1"))
   
   
 )
