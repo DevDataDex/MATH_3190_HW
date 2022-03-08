@@ -1,4 +1,4 @@
-# data <- get_cbb_data()
+data <- get_cbb_data()
 
 ui <- fluidPage(
   

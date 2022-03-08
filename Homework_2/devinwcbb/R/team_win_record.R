@@ -19,14 +19,14 @@
 #' 
 
 team_win_record <- function(data, team, text = 0) {
-  X <- team_filter(data,team)
-  tot_games <- X %>%
+  x <- team_filter(data,team)
+  tot_games <- x %>%
     summarise(n = n()) %>%
     pull()
-  wins <- X %>%
-    filter(((home == team) & (score_diff > 0)) | ((vis == team) & (score_diff < 0))) %>%
+  wins <- filter(x, ((home == team) & (score_diff > 0)) | ((vis == team) & (score_diff < 0))) %>%
     summarise(n()) %>%
     pull()
+  
   if (text == 1) {
     cat(team, "has won", wins, "of their", tot_games, "games, for a win percentage of", round(wins / tot_games * 100, digits = 2), "%. \n")
   } else {

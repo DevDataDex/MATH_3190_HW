@@ -16,6 +16,5 @@
 #' 
 #' 
 team_filter <- function(data, team) {
-  data %>% 
-    filter(home == team | vis == team)[,1:5]
+    filter(data, home == team | vis == team)
 }
