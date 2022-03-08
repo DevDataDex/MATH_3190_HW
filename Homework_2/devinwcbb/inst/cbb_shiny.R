@@ -2,6 +2,8 @@ data <- get_cbb_data()
 
 ui <- fluidPage(
   
+    theme = shinytheme("superhero"),
+  
     titlePanel("College Basketball Data"),
   
     sidebarLayout(
@@ -15,12 +17,17 @@ ui <- fluidPage(
       
       mainPanel(
         plotOutput("plot1"),
-       
       )
       
     ),
     
-    mainPanel( DTOutput("table1"))
+    mainPanel( 
+      DTOutput("table1"),
+      plotOutput("plot2", width = "50%")
+    ),
+    
+    
+    
   
   
 )
@@ -36,6 +43,10 @@ server <- function(input, output, session) {
   output$plot1 <- renderPlot({
        bbgraph(data, team())
      })  
+  
+  output$plot2 <- renderPlot({
+    violingraph(data, team())
+  })
   
   output$table1 <- renderDT(
       team_filter(data, team()),

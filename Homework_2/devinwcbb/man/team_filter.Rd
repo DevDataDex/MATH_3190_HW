@@ -21,4 +21,6 @@ to filter for a given team whether they were the home or visiting team.
 \examples{
 team_filter(get_cbb_data(), "Southern Utah")
 team_filter(get_cbb_data(), "Northern Arizona")
+
+
 }
