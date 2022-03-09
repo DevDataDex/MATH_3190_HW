@@ -19,6 +19,8 @@ violingraph <- function(data, team){
     mutate('Team' = team) %>%
     ggplot(aes(x = Team, y = scoredifference)) +
     geom_violin(fill = "steelblue2", color = "black") +
-    geom_jitter(width = 0.02)
+    geom_jitter(width = 0.02) +
+    labs(y = paste("Score Difference (",team, " - Opponent)"), 
+         title = "Distribution of Score Differences")
 }
 

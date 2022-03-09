@@ -17,10 +17,28 @@ ui <- fluidPage(
           
           mainPanel(
             plotOutput("plot1"),
-            DTOutput("table1"),
-            plotOutput("plot2")
           ),
         ),
+        
+        hr(),
+        
+        fluidRow(
+          column(8,
+            DTOutput("table1")
+          ),
+          column(4,
+            plotOutput("plot2")
+          )
+        ),
+        
+        hr(),
+        
+        fluidRow(
+          column(12,
+            plotOutput("plot3")
+          )
+        )
+        
       ),
       
       tabPanel("All Team Data",
@@ -46,19 +64,26 @@ server <- function(input, output, session) {
     violingraph(data, team())
   })
   
+  output$plot3 <- renderPlot({
+    time_series_graph(data, team())
+  })
+  
   output$table1 <- renderDT(
       team_filter(data, team()),
       options = list(pageLength = 10, 
-                     bFilter = FALSE),
+                     bFilter = FALSE,
+                     dom = 'tp'),
       rownames = FALSE,
       colnames = c("Date", "Opponent", "Team Score", "Opponent Score", 
                    "Location", "Score Difference")
   )
   
   output$table2 <- renderDT(
-    all_teams_records(data),
-    options = list(pageLength = 10),
-    colnames = c("Rank","Team","Wins","Total Games", "Win Percentage", "Sort")
+    all_teams_records(data) %>% select(-weighted_wins),
+    options = list(pageLength = 10,
+                   dom = 'ftp'),
+    colnames = c("Rank","Team","Wins","Total Games", "Win Percentage"),
+    caption = "Rankings are based off a weighted win percentage: (# wins)^2 / (total games)"
   )
 }
 
