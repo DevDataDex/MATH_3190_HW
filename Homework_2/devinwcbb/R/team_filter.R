@@ -17,11 +17,9 @@
 #' 
 team_filter <- function(data, team) {
     x <- filter(data, home == team | vis == team)
-    x$Opponent <- ifelse(x$home == team, x$vis, x$home)
-    x$`Team Score` <- ifelse(x$home == team, x$score1, x$score2)
-    x$`Opponent Score` <- ifelse(x$home == team, x$score2, x$score1)
-    x$`Score Difference` <- x$`Team Score` - x$`Opponent Score`
-    x$Date <- x$date
-    x$Location <- x$location
-    x[,c("Date","Opponent", "Team Score", "Opponent Score", "Location", "Score Difference")]
+    x$opponent <- ifelse(x$home == team, x$vis, x$home)
+    x$teamscore <- ifelse(x$home == team, x$score1, x$score2)
+    x$opponentscore <- ifelse(x$home == team, x$score2, x$score1)
+    x$scoredifference <- x$teamscore - x$opponentscore
+    x[,c("date","opponent", "teamscore", "opponentscore", "location", "scoredifference")]
 }

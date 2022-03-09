@@ -2,34 +2,32 @@ data <- get_cbb_data()
 
 ui <- fluidPage(
   
-    theme = shinytheme("superhero"),
+    theme = shinytheme("sandstone"),
   
     titlePanel("College Basketball Data"),
   
-    sidebarLayout(
-      
-      sidebarPanel(
-        selectInput('team', 'Teams', team_list(data), 
-                    selected = "Southern Utah"),
-        textOutput("text1")
-        
+    navbarPage("Menu",
+      tabPanel("Individual Team Data",
+        sidebarLayout(
+          sidebarPanel(
+            selectInput('team', 'Teams', team_list(data), 
+                        selected = "Southern Utah"),
+            textOutput("text1")
+          ),
+          
+          mainPanel(
+            plotOutput("plot1"),
+            DTOutput("table1"),
+            plotOutput("plot2")
+          ),
+        ),
       ),
       
-      mainPanel(
-        plotOutput("plot1"),
+      tabPanel("All Team Data",
+          DTOutput("table2")
       )
-      
-    ),
-    
-    mainPanel( 
-      DTOutput("table1"),
-      plotOutput("plot2", width = "50%")
-    ),
-    
-    
-    
-  
-  
+    )
+
 )
 
 server <- function(input, output, session) {
@@ -53,7 +51,14 @@ server <- function(input, output, session) {
       options = list(pageLength = 10, 
                      bFilter = FALSE),
       rownames = FALSE,
-      
+      colnames = c("Date", "Opponent", "Team Score", "Opponent Score", 
+                   "Location", "Score Difference")
+  )
+  
+  output$table2 <- renderDT(
+    all_teams_records(data),
+    options = list(pageLength = 10),
+    colnames = c("Rank","Team","Wins","Total Games", "Win Percentage", "Sort")
   )
 }
 

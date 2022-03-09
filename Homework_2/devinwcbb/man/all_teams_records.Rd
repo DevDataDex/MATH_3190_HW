@@ -16,5 +16,5 @@ tibble
 Asked in the homework as part of Question 3e. Builds a column of unique
 team names. Using the 'team_win_record' function with the vector output,
 builds a tibble with the columns 'team', 'wins', 'total_games', and
-'win_percentage'.
+'win_percentage'. Sorts the final output by a weighted win percentage.
 }

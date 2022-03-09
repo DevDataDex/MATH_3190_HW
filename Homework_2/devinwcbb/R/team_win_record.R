@@ -23,7 +23,7 @@ team_win_record <- function(data, team, text = 0) {
   tot_games <- x %>%
     summarise(n = n()) %>%
     pull()
-  wins <- sum(ifelse(x$`Score Difference` > 0, 1, 0))
+  wins <- sum(ifelse(x$scoredifference > 0, 1, 0))
   
   if (text == 1) {
     cat(team, "has won", wins, "of their", tot_games, "games, for a win percentage of", round(wins / tot_games * 100, digits = 2), "%. \n")

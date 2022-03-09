@@ -17,7 +17,8 @@
 violingraph <- function(data, team){
   team_filter(data,team) %>%
     mutate('Team' = team) %>%
-    ggplot(aes(x = Team, y = `Score Difference`)) +
-    geom_violin(fill = "steelblue2", color = "black")
+    ggplot(aes(x = Team, y = scoredifference)) +
+    geom_violin(fill = "steelblue2", color = "black") +
+    geom_jitter(width = 0.02)
 }
 
