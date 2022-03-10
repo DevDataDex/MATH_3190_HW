@@ -11,14 +11,23 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Question 1 (get your previous points!) 
 Keep working on your Shiny interfaces and packages! Complete any of the previous tasks you have not finished, and work to make your packages and interfaces better!
 
+My updated shiny apps can be found in the Homework_2 folder of my github.
+
 ## Question 2 (20 points) 
 Using the principles and guidelines from the data visualization lecture slides (we did not finish!), evaluate the plots in your Shiny interfaces (k means and basketball) and improve them! Also, add 3 more high-quality and highly-informative plots or tables to your interface. Use ggplot for all plots in the interface!
 
-**NOTE:** I think I should have kept a record of my progression, but I didn't other than my regular updates to github. 
+**NOTE:** I think I should have kept a record of my progression on my college basketball graphs, but I didn't other than my regular updates to github.
+
+Firstly, the k-means shiny app doesn't have a color blind friendly color palette, and so I switch it to a palette I found on __http://www.cookbook-r.com/Graphs/Colors_(ggplot2)/__.
 
 My first plot of Basketball Scores was very confusing because the team of interest could be represented on the x-axis (home) or y-axis (visitor). To make it easier to understand I altered the graph so the team of interest is always of the x-axis with their opponent on the y-axis. 
 
-I added a table of all of the games played by the team of interest to get a better visual of the game by game break down. Since there can be a lot of rows, I limited it to 10 rows at a time. In its first form the table was a copy of the KenPom data. Two of the principles of good visualization is that it is easier to compare columns than rows, and objects being compared should be side by side. I changed my table so each row represented a game and the two scores were placed next to eachother in the table. 
+**Game Table:** I really love the adage, "sometimes a table is the best way to show the data." This table shows all of the games played by the selected team. Since there can be a lot of rows, I limited it to 10 rows at a time. In its first form the table was a copy of the KenPom data. One of the principles of good visualization is that objects being compared should be side by side. I changed my table so the two scores were placed next to each other in the table.
+
+**Violin Graph:** I created this graph as a visual representation of the distribution of Score Differences for a selected team. The graph is a good visualization to me of on average how much a team win or loses a game by, and if they win (top heavy) or lose (bottom heavy) more often. One of the principles of good visualization is "Show the Data" and so I include data points in the violin as well. 
+**Time Series Graph:** This graph shows the selected team's game score across the season as well as the opponents score. While I think this gives good information (trends in overall score), I would like to find a way to present it that is not as messy. A good example of its use is we can see for Idaho state that as the season has progressed, while they still lose frequently, the games have been a lot closer. 
+
+**All Teams Graph:** Under the tab "All Team Data" there is a table showing the win percentages of all of the teams in the league. The teams are ranked by a weighted win percentage (wins^2 / total games) that gives favor to teams who have loss less games. Teams are shown 5 at a time, and there is a search bar to find a specific team. 
 
 ## Question 3 (20 points) 
 Finish going through the examples from the ggplot lecture. Confirm in your RMarkdown that you completed this task (on your honor!).

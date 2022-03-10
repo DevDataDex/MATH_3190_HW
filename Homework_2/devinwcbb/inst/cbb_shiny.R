@@ -42,6 +42,11 @@ ui <- fluidPage(
       ),
       
       tabPanel("All Team Data",
+          fluidRow(
+            column(8, offset = 3,
+              textOutput("text2")
+            )
+          ),
           DTOutput("table2")
       )
     )
@@ -54,6 +59,10 @@ server <- function(input, output, session) {
   
   output$text1 <- renderPrint({
     team_win_record(data,team(),1)
+  })
+  
+  output$text2 <- renderPrint({
+    "This page takes a minute to load. Thank you for your patience."
   })
     
   output$plot1 <- renderPlot({
