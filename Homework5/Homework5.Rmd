@@ -1,0 +1,111 @@
+---
+title: "Homework 5"
+author: "Devin Warner"
+date: '2022-03-24'
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+## Question 1
+
+$$ P(x = k | \lambda) = \frac{\lambda^ke^{-\lambda}}{k!}$$
+
+```{r q1}
+## a
+data_pois <- tibble("x_pois" = c(0:10), "y_pois" = dpois(c(0:10), 5))
+
+ggplot(data_pois, aes(x = x_pois, y = y_pois)) +
+  geom_col(width = 1, fill = "steelblue", color = "darkblue") +
+  scale_x_continuous(labels=as.character(x_pois),breaks = x_pois) +
+  labs(x ="x", y = "Probability", title = "Poisson Distribution (\u03BB = 5)")
+
+```
+b) 
+$$ L(\lambda | \texttt{x}) = \Pi_{i=1}^{n}[\frac{\lambda^{x_i}e^{-\lambda}}{x_i!}]=\frac{\lambda^{\Sigma_{i=1}^n[x_i]}e^{-n\lambda}}{\Pi_{i=1}^{n}[x_i!]}$$
+
+$$ l(\lambda | \texttt{x}) = \ln(L(\lambda | \texttt{x})) = \ln(\lambda^{\Sigma_{i=1}^n[x_i]}) + \ln(-n\lambda) - \ln(\Pi_{i=1}^{n}[x_i!]) = \Sigma_{i=1}^n[x_i]\ln(\lambda) - n\lambda - \ln(\Pi_{i=1}^{n}[x_i!])$$
+c)
+
+$$ \frac{d}{d\lambda} l(\lambda | \texttt{x}) = \frac{\Sigma_{i=1}^n[x_i]}{\lambda} - n$$
+Set equal to zero to solve for MLE.
+
+$$ 0 =  \frac{\Sigma_{i=1}^n[x_i]}{\hat{\lambda}} - n \rightarrow \hat{\lambda} = \frac{\Sigma_{i=1}^n[x_i]}{n}$$
+d) 
+
+
+## Question 2
+
+a) 
+
+```{r q2}
+x <- seq(0,1,0.001)
+y1 <- 0.5*(x^(0.5-1))
+y2 <- 5*(x^(5-1))
+dist <- tibble(x,y1,y2)
+
+dist %>%
+  ggplot(aes(x = x, y = y1)) +
+  geom_col(width = 0.001, fill = "darkblue", color = "darkblue") +
+  labs(x = "x", y = "Probability", title = "PDF for Theta = 0.5")
+
+dist %>%
+  ggplot(aes(x = x, y = y2)) +
+  geom_col(width = 0.001, fill = "steelblue", color = "steelblue") +
+  labs(x = "x", y = "Probability", title = "PDF for Theta = 5")
+
+```
+
+b)
+
+$$ L(\theta | \texttt{x}) = \Pi_{i =1}^n[\theta x_i^{\theta-1}] = \theta^n \Pi_{i =1}^n[x_i^{\theta-1}]$$
+Important fact, the product of values inside a log is equal to the sum of the log of each of the values
+
+$$ l(\theta | \texttt{x}) = n\ln(\theta) + (\theta -1)\Sigma_{i=1}^n[\ln(x_i)] $$
+c)
+
+$$ \frac{d}{d\theta} l(\theta | \texttt{x}) = \frac{n}{\theta} + \Sigma_{i=1}^n[\ln(x_i)]   $$
+
+Set equal to zero to solve for MLE. 
+
+$$ 0 =  \frac{n}{\hat{\theta}} + \Sigma_{i=1}^n[\ln(x_i)] \rightarrow \hat{\theta} = \frac{-n}{\Sigma_{i=1}^n[\ln(x_i)]} \text{  where  } x_i \in (0,1) \forall i =1,2,3,...,n$$
+
+
+## Question 3
+
+Given the pdf: 
+
+$$ f(x | \sigma^2) = (\frac{1}{2\pi\sigma^2})^{1/2}e^{-\frac{x^2}{2\sigma^2}} $$
+Find the Maximum Likelihood Estimator (MLE) $ \hat{\sigma}^2$ for $ \simga^2 $. Is it what you thought it would be? why or why not? 
+
+**Answer:** 
+
+The likelihood and log-likelihood:
+
+$$ L(\sigma^2 | \texttt{x}) = \Pi_{i=1}^n[(\frac{1}{2\pi\sigma^2})^{1/2}e^{-\frac{x_i^2}{2\sigma^2}}] = (\frac{1}{2\pi\sigma^2})^{n/2}e^{-\frac{\Sigma_{i=1}^n x_i^2}{2\sigma^2}}$$
+
+$$ l(\sigma^2 | \texttt{x}) = \frac{n}{2}\ln(\frac{1}{2\pi\sigma^2})- \frac{\Sigma_{i=1}^n x_i^2}{2\sigma^2}\ln(e) = -\frac{n}{2}\ln(2\pi\sigma^2) - \frac{\Sigma_{i=1}^n x_i^2}{2\sigma^2}$$
+
+Find the derivative of the log-likelihood
+
+$$ \frac{d}{d\sigma^2}l(\sigma^2 | \texttt{x}) = -\frac{n}{2\sigma^2} + \frac{\Sigma_{i=1}^n x_i^2}{2(\sigma^2)^2}  $$
+
+Set equal to zero to find MLE for $ \hat{\sigma^2} $ for $\sigma^2$
+
+$$ 0 =-\frac{n}{2\sigma^2} + \frac{\Sigma_{i=1}^n x_i^2}{2(\sigma^2)^2} $$
+$$ \frac{n}{2\sigma^2} = \frac{\Sigma_{i=1}^n x_i^2}{2(\sigma^2)^2} $$
+$$ \sigma^2 = \frac{\Sigma_{i=1}^n x_i^2}{n} $$
+My mind is blown. This is exactly what I have been taught the equation for variance is for a normal distribution with a mean of zero. I am overjoyed that I have just derived it. 
+
+
+
+
+
+
+
+
