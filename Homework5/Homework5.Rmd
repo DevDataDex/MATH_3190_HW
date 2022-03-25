@@ -1,7 +1,7 @@
 ---
 title: "Homework 5"
 author: "Devin Warner"
-date: '2022-03-24'
+date: '2022-03-28'
 output: html_document
 editor_options: 
   chunk_output_type: console
@@ -14,7 +14,14 @@ library(tidyverse)
 
 ## Question 1
 
+Suppose $\mathbf{x} = (x_1,...,x_N)^T$ follow a Poisson distribution with a  parameter $\lambda > 0$ and p.m.f given by
+
+
 $$ P(x = k | \lambda) = \frac{\lambda^ke^{-\lambda}}{k!}$$
+
+Answer the following questions:
+
+a) Using $\mathbf{ggplot}$, plot the Poisson pmf for k = 0,1,...,10 when $\lambda = 5$.
 
 ```{r q1}
 ## a
@@ -22,26 +29,40 @@ data_pois <- tibble("x_pois" = c(0:10), "y_pois" = dpois(c(0:10), 5))
 
 ggplot(data_pois, aes(x = x_pois, y = y_pois)) +
   geom_col(width = 1, fill = "steelblue", color = "darkblue") +
-  scale_x_continuous(labels=as.character(x_pois),breaks = x_pois) +
+  scale_x_continuous(breaks = data_pois$x_pois) +
   labs(x ="x", y = "Probability", title = "Poisson Distribution (\u03BB = 5)")
 
 ```
-b) 
-$$ L(\lambda | \texttt{x}) = \Pi_{i=1}^{n}[\frac{\lambda^{x_i}e^{-\lambda}}{x_i!}]=\frac{\lambda^{\Sigma_{i=1}^n[x_i]}e^{-n\lambda}}{\Pi_{i=1}^{n}[x_i!]}$$
 
-$$ l(\lambda | \texttt{x}) = \ln(L(\lambda | \texttt{x})) = \ln(\lambda^{\Sigma_{i=1}^n[x_i]}) + \ln(-n\lambda) - \ln(\Pi_{i=1}^{n}[x_i!]) = \Sigma_{i=1}^n[x_i]\ln(\lambda) - n\lambda - \ln(\Pi_{i=1}^{n}[x_i!])$$
-c)
+b) Assuming **x** is observed, give the likelihood $L(\lambda | \mathbf{x})$ and log-likelihood $l(\lambda | \mathbf{x})$ functions. 
 
-$$ \frac{d}{d\lambda} l(\lambda | \texttt{x}) = \frac{\Sigma_{i=1}^n[x_i]}{\lambda} - n$$
+$$ L(\lambda | \mathbf{x}) = \Pi_{i=1}^{n}[\frac{\lambda^{x_i}e^{-\lambda}}{x_i!}]=\frac{\lambda^{\Sigma_{i=1}^n[x_i]}e^{-n\lambda}}{\Pi_{i=1}^{n}[x_i!]}$$
+
+$$ l(\lambda | \mathbf{x}) = \ln(L(\lambda | \mathbf{x})) = \ln(\lambda^{\Sigma_{i=1}^n[x_i]}) + \ln(-n\lambda) - \ln(\Pi_{i=1}^{n}[x_i!]) = \Sigma_{i=1}^n[x_i]\ln(\lambda) - n\lambda - \ln(\Pi_{i=1}^{n}[x_i!]) $$
+
+c) Find the Maximum LIkelihood Estimate (MLE) $\hat{\lambda}$ for $\lambda$.
+
+$$ \frac{d}{d\lambda} l(\lambda | \mathbf{x}) = \frac{\Sigma_{i=1}^n[x_i]}{\lambda} - n $$
+
 Set equal to zero to solve for MLE.
 
 $$ 0 =  \frac{\Sigma_{i=1}^n[x_i]}{\hat{\lambda}} - n \rightarrow \hat{\lambda} = \frac{\Sigma_{i=1}^n[x_i]}{n}$$
-d) 
 
+d) Show that your estimator is in fact a maximum. 
+
+Checking Second-Derivative
+
+$$\frac{d^2}{d\lambda^2} l(\lambda | \textbf{x}) = -\frac{\Sigma_{i=1}^n[x_i]}{\lambda^2}$$
+
+The second derivative of the log-likelihood function is non-positive everywhere since $\lambda >0$ and $x \geq 0$ for all $x \in \mathbf{x}$. Thus, the log-likelihood function in concave down everywhere, and our extrema is a maximum. 
 
 ## Question 2
 
-a) 
+Suppose $\mathbf{x} = (x_1,...,x_N)^T$ are *iid* random variables with p.d.f given by
+
+$$ f(x|\theta) = \theta x^{\theta -1}, 0 \leq x \leq 1, 0 < \theta < \infty $$
+
+a) Using **ggplot**, plot the pdf for an individual $x_i$ given $\theta = 0.5$ and also for $\theta = 5$.
 
 ```{r q2}
 x <- seq(0,1,0.001)
@@ -61,46 +82,54 @@ dist %>%
 
 ```
 
-b)
+b) Give the likelihood $L(\lambda | \mathbf{x})$ and log-likelihood $l(\lambda | \mathbf{x})$ functions. 
 
-$$ L(\theta | \texttt{x}) = \Pi_{i =1}^n[\theta x_i^{\theta-1}] = \theta^n \Pi_{i =1}^n[x_i^{\theta-1}]$$
+$$ L(\theta | \mathbf{x}) = \Pi_{i =1}^n[\theta x_i^{\theta-1}] = \theta^n \Pi_{i =1}^n[x_i^{\theta-1}]$$
 Important fact, the product of values inside a log is equal to the sum of the log of each of the values
 
-$$ l(\theta | \texttt{x}) = n\ln(\theta) + (\theta -1)\Sigma_{i=1}^n[\ln(x_i)] $$
-c)
+$$ l(\theta | \mathbf{x}) = n\ln(\theta) + (\theta -1)\Sigma_{i=1}^n[\ln(x_i)] $$
+c) Find the Maximum Likelihood Estimator (MLE) $\hat{\theta}$ for $\theta$.
 
-$$ \frac{d}{d\theta} l(\theta | \texttt{x}) = \frac{n}{\theta} + \Sigma_{i=1}^n[\ln(x_i)]   $$
+$$ \frac{d}{d\theta} l(\theta | \mathbf{x}) = \frac{n}{\theta} + \Sigma_{i=1}^n[\ln(x_i)]   $$
 
 Set equal to zero to solve for MLE. 
 
 $$ 0 =  \frac{n}{\hat{\theta}} + \Sigma_{i=1}^n[\ln(x_i)] \rightarrow \hat{\theta} = \frac{-n}{\Sigma_{i=1}^n[\ln(x_i)]} \text{  where  } x_i \in (0,1) \forall i =1,2,3,...,n$$
 
+d) Show that your estimator is in fact a maximum. 
+
+Checking Second Derivative 
+
+$$ \frac{d^2}{d\theta^2} l(\theta | \textbf{x}) =  -\frac{n}{\theta^2}$$
+
+We see that the second derivative of the log-likelihood function is non-positive everywhere (for all values of $\theta$) since $\theta^2 \geq 0$ and $n \geq 0$. Thus, our log-likelihood function is concave down everywhere, and our extrema is a maximum. 
 
 ## Question 3
 
-Given the pdf: 
+Suppose $\mathbf{x} = (x_1,...,x_N)^T$ are *iid* random variables from a $Normal(0,\sigma^2)$ distribution. The pdf is given by
 
 $$ f(x | \sigma^2) = (\frac{1}{2\pi\sigma^2})^{1/2}e^{-\frac{x^2}{2\sigma^2}} $$
-Find the Maximum Likelihood Estimator (MLE) $ \hat{\sigma}^2$ for $ \simga^2 $. Is it what you thought it would be? why or why not? 
+
+Find the Maximum Likelihood Estimator (MLE) $\hat{\sigma}^2$ for $\sigma^2$. Is it what you thought it would be? Why or why not? 
 
 **Answer:** 
 
 The likelihood and log-likelihood:
 
-$$ L(\sigma^2 | \texttt{x}) = \Pi_{i=1}^n[(\frac{1}{2\pi\sigma^2})^{1/2}e^{-\frac{x_i^2}{2\sigma^2}}] = (\frac{1}{2\pi\sigma^2})^{n/2}e^{-\frac{\Sigma_{i=1}^n x_i^2}{2\sigma^2}}$$
+$$ L(\sigma^2 | \mathbf{x}) = \Pi_{i=1}^n[(\frac{1}{2\pi\sigma^2})^{1/2}e^{-\frac{x_i^2}{2\sigma^2}}] = (\frac{1}{2\pi\sigma^2})^{n/2}e^{-\frac{\Sigma_{i=1}^n x_i^2}{2\sigma^2}}$$
 
-$$ l(\sigma^2 | \texttt{x}) = \frac{n}{2}\ln(\frac{1}{2\pi\sigma^2})- \frac{\Sigma_{i=1}^n x_i^2}{2\sigma^2}\ln(e) = -\frac{n}{2}\ln(2\pi\sigma^2) - \frac{\Sigma_{i=1}^n x_i^2}{2\sigma^2}$$
+$$ l(\sigma^2 | \mathbf{x}) = \frac{n}{2}\ln(\frac{1}{2\pi\sigma^2})- \frac{\Sigma_{i=1}^n x_i^2}{2\sigma^2}\ln(e) = -\frac{n}{2}\ln(2\pi\sigma^2) - \frac{\Sigma_{i=1}^n x_i^2}{2\sigma^2}$$
 
 Find the derivative of the log-likelihood
 
-$$ \frac{d}{d\sigma^2}l(\sigma^2 | \texttt{x}) = -\frac{n}{2\sigma^2} + \frac{\Sigma_{i=1}^n x_i^2}{2(\sigma^2)^2}  $$
+$$ \frac{d}{d\sigma^2}l(\sigma^2 | \mathbf{x}) = -\frac{n}{2\sigma^2} + \frac{\Sigma_{i=1}^n x_i^2}{2(\sigma^2)^2}  $$
 
 Set equal to zero to find MLE for $ \hat{\sigma^2} $ for $\sigma^2$
 
-$$ 0 =-\frac{n}{2\sigma^2} + \frac{\Sigma_{i=1}^n x_i^2}{2(\sigma^2)^2} $$
-$$ \frac{n}{2\sigma^2} = \frac{\Sigma_{i=1}^n x_i^2}{2(\sigma^2)^2} $$
-$$ \sigma^2 = \frac{\Sigma_{i=1}^n x_i^2}{n} $$
-My mind is blown. This is exactly what I have been taught the equation for variance is for a normal distribution with a mean of zero. I am overjoyed that I have just derived it. 
+$$ 0 =-\frac{n}{2\hat{\sigma}^2} + \frac{\Sigma_{i=1}^n x_i^2}{2(\hat{\sigma}^2)^2} $$
+$$ \frac{n}{2\hat{\sigma}^2} = \frac{\Sigma_{i=1}^n x_i^2}{2(\hat{\sigma}^2)^2} $$
+$$ \hat{\sigma}^2 = \frac{\Sigma_{i=1}^n x_i^2}{n} $$
+My mind is blown. This is exactly what I have been taught the equation for sample variance is for a normal distribution with a mean of zero. I am overjoyed that I have just derived it. 
 
 
 
