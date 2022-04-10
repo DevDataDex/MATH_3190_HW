@@ -1,0 +1,187 @@
+---
+title: "Homework 6"
+author: "Devin Warner"
+date: '2022-04-11'
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(glmnet)
+```
+
+In this homework you will practice using cross-validation to fit data using LASSO and K-nearest neighbor models. Please upload to your GitHub an R Markdown document answering the following:   
+
+
+## Question 1 (20 points) 
+A researcher wants to determine how employee salaries at a certain company are related to the length of employment, previous experience, and education. The researcher selects eight employees from the company and obtains the data shown below (the dataset is available as a tibble in the .Rmd). 
+
+```{r q1, echo = FALSE}
+salary <- tibble(
+    Salary = c(57310.00, 57380.00, 54135.00, 56985.00, 58715.00, 60620.00, 59200.00, 60320.00),
+    Employment = c(10,5,3,6,8,20,8,14),
+    Experience = c(2,6,1,5,8,0,4,6),
+    Education = c(16,16,12,14,16,12,18,17)
+)
+salary
+```
+
+a) Fit a standard least squares regression model to these data and interpret the results. After looking at the statistical significance of the $\beta$s, which covariates would you include in a final model? 
+
+```{r q1_a}
+  lm_model <- lm(Salary~.,data = salary)
+  summary(lm_model)
+```
+
+The standard least squares regression line using Employment, Experience and Education explains about 94% of the variation in salary. Of these variables, Employment is significant at the $\alpha$=0.01 level, while the other two variables are not significant at the $\alpha$=0.10 level. Based off of the statistical significance of the $\beta$s only, I would chose only Employment to include in a final model.
+
+b) Use \texttt{glmnet} to fit a LASSO model to these covariates. Try $\lambda$=1000, 800, 500, and 1. How do the results compare to each other and the least squares model? 
+
+```{r q1_b}
+lasso_salary_1000 <- glmnet(as.matrix(salary[,-1]), salary$Salary, lambda = 1000,
+                            family = "gaussian", alpha = 1)
+lasso_salary_1000$beta
+
+lasso_salary_800 <- glmnet(as.matrix(salary[,-1]), salary$Salary, lambda = 800,
+                           family = "gaussian", alpha = 1)
+lasso_salary_800$beta
+
+lasso_salary_500 <- glmnet(as.matrix(salary[,-1]), salary$Salary, lambda = 500,
+                           family = "gaussian", alpha = 1)
+lasso_salary_500$beta
+
+lasso_salary_1 <- glmnet(as.matrix(salary[,-1]), salary$Salary, lambda = 1,
+                         family = "gaussian", alpha = 1)
+lasso_salary_1$beta
+```
+
+We see that the LASSO model with $\lambda = 1$ has model coefficients that equivalent to the standard least squares regression line. As lambda increases, the coefficients on Experience and Education decrease until they are equivalent to 0 in the model. The coefficient on Experience goes to 0 first, and the Education. This agrees with my choice in part (a) to only include Employment in the final model. 
+
+c) Which LASSO model (i.e. $\lambda$) would you select? (note you are not just restricted to $\lambda$ values of 1000, 800, 500, and 1). Justify your answer. 
+
+We want to select the $\lambda$ value that produces the best accuracy for prediction. Using cross validation we can find the optimal $\lambda$ value. 
+
+```{r q1_c}
+lasso.cv <- cv.glmnet(as.matrix(salary[,-1]), salary$Salary, alpha = 1)
+plot(lasso.cv)
+(lasso.lambda <- lasso.cv$lambda.min)
+
+```
+
+
+As shown above, the best $\lambda$ value for prediction is 7.351223.
+
+d) Use \texttt{glmnet} to fit a Ridge regression model to these data. Try $\lambda$=1000, 800, 500, and 1. How do these results differ from the least squares and LASSO models? 
+
+```{r q1_d}
+ridge_salary_1000 <- glmnet(as.matrix(salary[,-1]), salary$Salary, lambda = 1000,
+                            family = "gaussian", alpha = 0)
+ridge_salary_1000$beta
+
+ridge_salary_800 <- glmnet(as.matrix(salary[,-1]), salary$Salary, lambda = 800,
+                           family = "gaussian", alpha = 0)
+ridge_salary_800$beta
+
+ridge_salary_500 <- glmnet(as.matrix(salary[,-1]), salary$Salary, lambda = 500,
+                           family = "gaussian", alpha = 0)
+ridge_salary_500$beta
+
+ridge_salary_1 <- glmnet(as.matrix(salary[,-1]), salary$Salary, lambda = 1,
+                         family = "gaussian", alpha = 0)
+ridge_salary_1$beta
+```
+
+Again, a Ridge model with $\lambda = 1$ is equivalent to the standard least square regression line. We see in the Ridge model though that variable coefficients do not decrease to 0 as $\lambda$ increases. However, they still decrease, with the coefficient on Experience decreasing first and by a larger magnitude than Education decreases. 
+
+## Question 2 (20 points)
+
+The \texttt{cereal.csv} dataset provides nutritional information on nearly 80 common breakfast cereals. The 'rating' column provides an overall rating for each cereal (possibly from Consumer Reports?). Use a LASSO regression model to identify the best predictors of cereal rating. Evaluate the model for $\lambda$ values of 8, 5, 3, and 1 (among others). Which $\lambda$ would you choose and why? Which covariates best explain the rating? 
+
+```{r q2_Read/Clean, echo = FALSE, include = FALSE}
+cereal <- read_csv("cereal.csv") %>%
+  mutate(mfrA = ifelse(mfr == 'A', 1,0)) %>%
+  mutate(mfrG = ifelse(mfr == 'G', 1,0)) %>%
+  mutate(mfrK = ifelse(mfr == 'K', 1,0)) %>%
+  mutate(mfrN = ifelse(mfr == 'N', 1,0)) %>%
+  mutate(mfrP = ifelse(mfr == 'P', 1,0)) %>%
+  mutate(mfrQ = ifelse(mfr == 'Q', 1,0)) %>%
+  mutate(mfrR = ifelse(mfr == 'R', 1,0)) %>%
+  mutate(typeCold = ifelse(type == 'C', 1,0)) %>%
+  mutate(typeHot = ifelse(type == 'H', 1,0)) %>%
+  select(-c(mfr, type))
+```
+
+We will use a cross validation to determine the best value of $\lambda$ for our data. First, we will split our data into training and testing data. (For reproducibility's sake, we will set the seed to 8561)
+
+```{r q2_split}
+set.seed(8561)
+
+test_ind <- sample(nrow(cereal), 0.3*nrow(cereal))
+cereal_test <- cereal[test_ind,]
+cereal_train <- cereal[-test_ind,]
+```
+
+Next, we will train a cross validation LASSO regression model using our training data. We will exclude the *name* covariate from our modeling as it is an identifying factor. Output below is the change in change in MSE as $\lambda$ increases, as well as the $\lambda$ value that gives the lowest (best) MSE. 
+
+```{r q2_lasso.cv}
+cereal_lasso <- cv.glmnet(as.matrix(cereal_train[,-c(1,14)]), cereal_train$rating, alpha = 1, lamdba = seq(1,10))
+plot(cereal_lasso)
+(cereal.lambda <- cereal_lasso$lambda.min)
+```
+
+Now, we will output the coefficients of the LASSO model with our best $\lambda$ value, as well as the MSE for the training data. 
+
+```{r coeff, echo = FALSE}
+predict(cereal_lasso,s=cereal.lambda,type="coefficients")
+train_preds <- predict(cereal_lasso,s=cereal.lambda,newx = as.matrix(cereal_train[,-c(1,14)]))
+train_mse <- mean((train_preds-cereal_train$rating)^2)
+print(paste("The training MSE with \u03BB =", round(cereal.lambda,2), "is:", round(train_mse,6)))
+```
+
+The variables (covariates) that have non-zero coefficients are the best for explaining rating. Since the coefficients are penalized, the larger the coefficient is, the better it is at explaining rating. We see that the covariates *fiber* and *protein* have the greatest positive affect on rating, and *fat* and *sugars* have the greatest negative affect on rating. 
+
+It is important to note that the *mfr* variables that were excluded from the model appeared very sparsely in the data set (less than 10 observations). The same happens with the *type* variable as there are only 3 *H* observations. This could potentially be a problem because none of these observations may have ended up in the training data because they were so sparse.
+
+Now, we will see how our LASSO model with the best $\lambda$ value does at predicting unseen data. This model has 14 covariates. For reference, we will calculate a baseline accuracy of the test data set using the mean of *rating* as the estimate for all observations. 
+
+```{r q2_preds}
+baseline <- mean((mean(cereal_test$rating)-cereal_test$rating)^2)
+  
+cereal_preds <- predict(cereal_lasso, s = cereal.lambda, newx = as.matrix(cereal_test[,-c(1,14)]))
+mse <- mean((cereal_preds - cereal_test$rating)^2)
+```
+
+```{r q2_print, echo = FALSE}
+print(paste("The baseline MSE is:", baseline))
+print(paste("The LASSO model with \u03BB =", round(cereal.lambda,2), " MSE is:", round(mse,6)))
+```
+
+Okay, we are seeing a huge improvement in accuracy from the baseline. At first glance, this can be really awesome! Our model didn't do as well on the testing data as the training data, which is to be expected, but not different enough to suggest overfitting. A potential issue is that our model has 14 covariates and the test data only has 13 observations. This shouldn't be an issue though, because those 13 points were unseen while training the model. 
+
+## Question 3 (20 points)
+
+An automobile consulting company wants to understand the factors on which the pricing of cars depends. Use an Elastic Net model and the \texttt{car\_price\_prediction.csv} dataset to determine which variables are significant in predicting the price of a car. Use cross-validation to find an optimal value for $\lambda$. Interpret your final model. 
+
+```{q3 Read Data, echo = FALSE}
+carprice <- read_csv("car_price_prediction.csv") %>%
+  mutate(fuelCNG = ifelse(fuel == 'CNG', 1,0)) %>%
+  mutate(fuelDiesel = ifelse(fuel == 'Diesel', 1,0)) %>%
+  mutate(fuelElectric = ifelse(fuel == 'Electric', 1,0)) %>%
+  mutate(fuelLPG = ifelse(fuel == 'LPG', 1,0)) %>%
+  mutate(fuelPetrol = ifelse(fuel == 'Petrol', 1,0)) %>%
+  mutate(sellerDealer = ifelse(seller_type == 'Dealer',1,0)) %>%
+  mutate(sellerIndividual = ifelse(seller_type == 'Individual',1,0)) %>%
+  mutate(sellerTrustmark = ifelse(seller_type == 'Trustmark Dealer',1,0)) %>%
+  mutate(transmissionAuto = ifelse(transmission == 'Automatic', 1,0)) %>%
+  mutate(transmissionManual = ifelse(transmission == 'Manual', 1,0)) %>%
+  mutate(firstOwner = ifelse(owner == 'First Owner', 1,0)) %>%
+  mutate(secondOwner = ifelse(owner == 'Second Owner', 1,0)) %>%
+  mutate(thirdOwner = ifelse(owner == 'Third Owner', 1,0)) %>%
+  mutate(fourthOrMoreOwner = ifelse(owner == 'Fourth & Above Owner', 1,0)) %>%
+  mutate(testDriveOwner = ifelse(owner == 'Test Drive Car', 1,0)) %>%
+  select(-c(fuel,seller_type,transmission,owner))
+```
+

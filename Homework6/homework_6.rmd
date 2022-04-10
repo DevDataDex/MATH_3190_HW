@@ -6,11 +6,14 @@ output:
   pdf_document: default
   html_document:
     df_print: paged
+editor_options: 
+  chunk_output_type: console
 ---
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 suppressPackageStartupMessages({
     library(tidyverse)
+    library(tinytex)
     library(DT)
 })
 ```
@@ -49,6 +52,12 @@ prcomp(salary[,-1])$rotation
 ```
     \begin{enumerate}
     \item Fit a standard least squares regression model to these data and interpret the results. After looking at the statistical significance of the $\beta$s, which covariates would you include in a final model? 
+```{r q1_a}
+  options(tinytex.verbose = TRUE)
+  lm_model <- lm(Salary~.,data = salary)
+  summary(lm_model)
+```
+    The standard least squares regression line using Employment, Experience and Education explains about 94% of the variation in salary. Of these variables, Employment is significant at the $\alpha$=0.01 level, while the other two variables are not significant at the $\alpha$=0.10 level. Based off of the statistical significance of the $\beta$s only, I would chose only Employment to include in a final model.
     \item Use \texttt{glmnet} to fit a LASSO model to these covariates. Try $\lambda$=1000, 800, 500, and 1. How do the results compare to each other and the least squares model? 
     \item Which LASSO model (i.e. $\lambda$) would you select? (note you are not just restricted to $\lambda$ values of 1000, 800, 500, and 1). Justify your answer. 
     \item Use \texttt{glmnet} to fit a Ridge regression model to these data. Try $\lambda$=1000, 800, 500, and 1. How do these results differ from the least squares and LASSO models?  
