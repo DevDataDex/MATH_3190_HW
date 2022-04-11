@@ -11,6 +11,7 @@ editor_options:
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(glmnet)
+library(psych)
 ```
 
 In this homework you will practice using cross-validation to fit data using LASSO and K-nearest neighbor models. Please upload to your GitHub an R Markdown document answering the following:   
@@ -136,6 +137,7 @@ Now, we will output the coefficients of the LASSO model with our best $\lambda$ 
 
 ```{r coeff, echo = FALSE}
 predict(cereal_lasso,s=cereal.lambda,type="coefficients")
+
 train_preds <- predict(cereal_lasso,s=cereal.lambda,newx = as.matrix(cereal_train[,-c(1,14)]))
 train_mse <- mean((train_preds-cereal_train$rating)^2)
 print(paste("The training MSE with \u03BB =", round(cereal.lambda,2), "is:", round(train_mse,6)))
@@ -165,7 +167,7 @@ Okay, we are seeing a huge improvement in accuracy from the baseline. At first g
 
 An automobile consulting company wants to understand the factors on which the pricing of cars depends. Use an Elastic Net model and the \texttt{car\_price\_prediction.csv} dataset to determine which variables are significant in predicting the price of a car. Use cross-validation to find an optimal value for $\lambda$. Interpret your final model. 
 
-```{q3 Read Data, echo = FALSE}
+```{r q3_data, echo = FALSE, include = FALSE}
 carprice <- read_csv("car_price_prediction.csv") %>%
   mutate(fuelCNG = ifelse(fuel == 'CNG', 1,0)) %>%
   mutate(fuelDiesel = ifelse(fuel == 'Diesel', 1,0)) %>%
@@ -181,7 +183,123 @@ carprice <- read_csv("car_price_prediction.csv") %>%
   mutate(secondOwner = ifelse(owner == 'Second Owner', 1,0)) %>%
   mutate(thirdOwner = ifelse(owner == 'Third Owner', 1,0)) %>%
   mutate(fourthOrMoreOwner = ifelse(owner == 'Fourth & Above Owner', 1,0)) %>%
-  mutate(testDriveOwner = ifelse(owner == 'Test Drive Car', 1,0)) %>%
-  select(-c(fuel,seller_type,transmission,owner))
+  mutate(testDriveOwner = ifelse(owner == 'Test Drive Car', 1,0)) 
 ```
 
+Let us perform some exploratory data analysis to see what kind of information our data contains. First we will examine the distribution of levels inside our factor varialbes, *fuel*, *transmission*,*seller_type*, and *owner*.
+
+```{r q3_eda}
+carprice %>%
+  ggplot(aes(x = fuel, fill = as.factor(fuel))) + 
+  geom_bar() + 
+  xlab("Fuel Type") +
+  ylab("Count")
+
+carprice %>%
+  ggplot(aes(x = transmission, fill = as.factor(transmission))) + 
+  geom_bar() + 
+  xlab("Transmission") +
+  ylab("Count")
+
+carprice %>%
+  ggplot(aes(x = seller_type, fill = as.factor(seller_type))) + 
+  geom_bar() + 
+  xlab("Seller Type") +
+  ylab("Count")
+
+carprice %>%
+  ggplot(aes(x = owner, fill = as.factor(owner))) + 
+  geom_bar() + 
+  xlab("Owner") +
+  ylab("Count")
+```
+
+From these plots we see that most of our observations use Diesel or Petrol fuel, are manual transmission, sold by individuals, and are currently owned by the first owner. We will convert each of these factor variables into dummy variables 
+
+```{r q3_rm, echo = FALSE}
+carprice <- carprice %>% select(-c(fuel,seller_type,transmission,owner))
+```
+
+Next, we will see view how our continuous variables (*year* and *km_driven*) are correlated to our *y* variable, *selling_price*. 
+
+```{r q3_panels}
+pairs.panels(carprice[,c(2,4,3)])
+```
+
+We see from the plot above that *year* appears to have a positive, exponential effect on *selling_price* (bottom left plot), and *km_driven* has a negative, exponential effect on *selling_price* (bottom middle plot). The lines in red are a lowess smoother, not an exponential line. 
+
+Now, we move forward to creating our Elastic Net model. I have chosen to stay with a LASSO regression since I like the feature of coefficients reducing to zero. First, we will split our data into training and testing data. For reproducibility, we will use a seed of 8561.
+
+```{r q3_split}
+# Split Data
+set.seed(8561)
+test_ind <- sample(nrow(carprice), 0.3*nrow(carprice))
+car_test <- carprice[test_ind,]
+car_train <- carprice[-test_ind,]
+```
+
+We will now run a series of cross-validated LASSO regression models using our training data to predict *selling_price* using all other variables (except the identifying factor, *name*).
+
+```{r q3_model}
+# Run Model
+car_lasso_cv <- cv.glmnet(as.matrix(car_train[,-c(1,3)]), car_train$selling_price, alpha = 1)
+
+# Examine model
+plot(car_lasso_cv)
+(car.lambda <- car_lasso_cv$lambda.min)
+```
+
+The plot above shows us that as $\lambda$ increases (even by a significant amount), our prediction accuracy measured in Mean-Squared Error (MSE) does not change very much. While the model shows that the $\lambda$ value that produces the smallest MSE is 807.6 (log($\lambda$) = 6.7), a $\lambda$ value of 22026 (log($\lambda$) = 10) has a comparable MSE value. Moving forward, we will use $\lambda$ = exp(10) = 22,026 to show us which of the variables are most important in predicting the price of a car. Below is a table of our non-zero coefficients for a LASSO model with $\lambda = e^{10}$. 
+
+```{r q3_coef}
+# View coeff at different lambdas
+X <- predict(car_lasso_cv,s=exp(10),type="coefficients")
+tibble(Variable = names(X[,1]), Coefficient = X[,1]) %>% filter(Coefficient != 0)
+```
+
+We see from this table that *year*,*km_driven*,*fuelDiesel*,*sellerIndividual*,*sellerTrustmark*,*transmissionAuto*,*transmissionManual*, and *firstOwner* are the most important for prediction. This is an interesting result for the following reasons:
+
+1) The dummy variable for Diesel is the only one that remains. By our EDA results, most observations were either Diesel or Petrol cars. This remaining variable acts like an indicator for a diesel car. If a car uses diesel fuel it is predicted to be more expensive then any other car (mostly petrol). 
+
+2) A similar thing happens with the dummy variables for *Owner*. Only the *firstOwner* variable remains and acts as an indicator for a first owner car or not. Our model is showing us in this data set that there is not a significant difference in the *selling_price* between second, third, and more than fourth owner cars. 
+
+3) I am surprised that both *transmission* dummy variables remain in the final model. Because the factor is binary, I was for sure that at least one fo them would disappear. The price difference in automatic and manual cars must be different enough that our model decided to keep both dummy variables. 
+
+4) The variables *year* and *km_driven* behave as we would expect from our EDA. 
+
+
+Now let us see how our model(s) does at predicting unseen data. We will be using Root Mean Squared Error as a measurement of accuracy. The table below shows baseline RMSE (predict all *selling_price* values as the mean of *selling_price*), and RMSE using LASSO models with $log(\lambda) = 6.7$ (picked by glmnet) and $log(\lambda) = 10$ (picked by us).
+
+```{r q3_pred}
+# Check test accuracy
+baseline_rmse <- sqrt(mean((mean(car_test$selling_price)-car_test$selling_price)^2))
+
+car_preds_1 <- predict(car_lasso_cv, s = car.lambda, newx = as.matrix(car_test[,-c(1,3)]))
+test_rmse_1 <- sqrt(mean((car_preds_1 - car_test$selling_price)^2))
+
+car_preds_2 <- predict(car_lasso_cv, s = exp(10), newx = as.matrix(car_test[,-c(1,3)]))
+test_rmse_2 <- sqrt(mean((car_preds_2 - car_test$selling_price)^2))
+
+tibble(Model = c("Baseline", "LASSO (log(\u03BB) = 6.7)", "LASSO (log(\u03BB) = 10)"),
+       Test_RMSE = c(baseline_rmse, test_rmse_1, test_rmse_2))
+```
+
+We see that both models are significantly better at prediction than the baseline, and using $log(\lambda) = 10$ (less variables) has a better RMSE than what glment picked. The RMSE tells us, that on average the prediction for the price of the car is off by about $424,000. Taking a quick look at the standard deviation of our test data:
+
+```{r q3_sd}
+sd(car_test$selling_price)
+```
+
+We see that our RMSE is smaller than the standard deviation, which is a good sign that we have strong predictive power. 
+
+Our model coefficients for our LASSO model are harder to interpret because they are penalized. Let us run a standard least squares regression line using the variables picked by our LASSO model to get interpretable coefficients (we exclude *transmissionManual* because it is perfectly correlated with *transmissionAuto*). 
+
+```{r q3_lm}
+car_lm <- lm(selling_price~year+km_driven+fuelDiesel+sellerIndividual+sellerTrustmark+
+               transmissionAuto+firstOwner,data = carprice)
+summary(car_lm)
+```
+
+We can now interpret each of these variables as an increase or decrease in *selling_price* for a one unit increase in each of the variables. For example, for every additional km driven on the car, the price of the car decreases by $0.97. Overall, these variables explain about 45% of the variation in *selling_price*. 
+
+And it appears I made an error. Even though our LASSO coefficients are penalized, they are all of the same magnitude (e+N) as the standard least squares line model. This means they will have a very similar interpretation as is, and computing our linear model was redundant (other than the fact that it taught me something new). 
