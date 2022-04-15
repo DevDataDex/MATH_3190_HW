@@ -1,0 +1,62 @@
+---
+title: "MATH 3190 Homework 7"
+author: "Devin Warner"
+date: "Due 4/15/2022"
+output: pdf_document
+
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+suppressPackageStartupMessages({
+    library(tidyverse)
+    library(DT)
+})
+```
+
+These answers work in tandem with my KMeans and College Basketball RShiny apps which can be found in my *devinwkmeans* and *devinwcbb* packages respectivly. To view the Shiny Apps downland the packages and run the functions *run_kmeans_shiny()* for the KMeans Shiny and *run_cbb_shiny()* for the Basketball Shiny. Please reach out if you have trouble running the apps. 
+
+\begin{enumerate}
+   \item (50 points) Here we will modify your K-means package and Shiny App to include K nearest neighbor, principle components, and umap functions. Please do the following: 
+    \begin{enumerate}
+    \item {\bf Kmeans:} Change your K-means algorithm to allow for the users choice of 1 or more input variables (currently using 2), still allowing for the user to choose $K$ and display the two dimensions of choice (as is the case currently). Change K-means plotting function (and thus the app) to display iris species in different colors and classification group using shapes (add a legend to this plot). Apply cross-validation to identify the the optimal value for $K$ for the iris dataset. \\
+    
+    On the K-Means tab, users now have the option to select radio buttons of the variables they would like to use while clustering. The plot still only shows two variables at a time, but the results change depending on what variables are being clustered. A warning is given if a variable is being plot that is not also being clustered by. \\
+    
+    The user can still change the number of clusters they would like. We determined in class that we couldn't run cross validation on k-means, and so after some data exploration I have decided (and its pretty intuitive) that the optimal value of $K$ is 3 for this dataset. \\
+    
+    
+    \item {\bf K nearest neighbors:} Write a function that plots the classification results of a K nearest neighbors algorithm for the users choice of 1 or more input variables and the user's choice of $K$. Plot points in two dimensions (user's choice) and display iris species in different colors and classification group using shapes (add a legend). Add this to the K-means Shiny App. Apply cross-validation to identify the the optimal value for $K$ for the iris dataset.  \\
+    
+    The kNN tab on the Shiny app includes the changes requested in this question. In the background, the \texttt{iris} dataset is split into training and testing data. What is plotted is the predicted \texttt{Species} of the testing observations using (user's choice) k-nearest neighbors, as well as the actual \texttt{Species} of the of the testing observation. \\
+    
+    \item {\bf Dimension reduction:} write a function that applies dimension reduction methods (PCA, UMAP) to a dataset and plots a user's choice of reduced components in two dimensions (UMAP only provides two), and color the points based on iris species (add a legend). \\
+    
+    The Dimension Reduction tab on the Shiny app includes both Principle Component and UMAP methods and includes the functionality requested in the question. The first table shows the rotation values for each PC, and the second table shown the proportion of variance explained by each PC. \\
+    
+    \item Which methods would you prefer for classification or analysis for the iris dataset? \\
+    
+    Personaly I would use PCA and take the first two components, and then a kNN for classification. I like how PCA groups each of the observations into their respective \texttt{Species}, and the kNN appears to be very accurate for prediction. I think this method will give us our best results.  \\
+    
+    \end{enumerate}
+    
+    \item (50 points) For your basketball dataset, \texttt{mutate} or \texttt{summarize} a new dataset that contains the following for each team: average points scored (total, home, away), average points allowed (total, home, away), score difference (total, home, away), winning percentage (total, home, away) new columns for each team (may need to use a log or logistic transformation), conference (get help from Akhil), whether or not they participated in the tournament, and any other relevant statistic or summary measure may think of (if you come up with something good, share with the class!). Do the following: 
+    \begin{enumerate}
+        \item Fit a LASSO model to predict factors that predict final winning percentage (might have to use a log or logistic transformation on the percentage). Exclude home and away winning percentage. Identify a "best" value for $\lambda$ and interpret your model. \\
+        
+        The LASSO tab of the Basketball Shiny app includes the functionality requested. The default value of $\lambda$ is given from the \texttt{cv.glmnet()$lambda.min} function. The app allows the user to change the value of $\lambda$. A vertical bar on the two plots shows the current value of $\lambda$. A table on the bottom shows the coefficient values for the LASSO model with the given $\lambda$ value. As the data scientist, I think the best log($\lambda$) is approximately -3.89. This leaves us with the four most important variables without a significant increase is MSE nor a significant decrease in $R^2$. \\
+        
+        Using log($\lambda$) = -3.89 leaves us with the variables \texttt{avg_point_sc_home} (Average Points Scored at Home),\texttt{avg_sc_diff_home} (Average Score Difference Home),\texttt{avg_sc_diff_vis} (Average Score Difference Away), and \texttt{tournament} (Paricipated in NCAA tournament). This model has a testing MSE of 0.0125 and an $R^2$ of 0.8888. I am surprised that the model kept both home and away score difference variables rather than only including the total score difference variable. This shows us that being able to win games as the visiting team has an important effect of total win percentage. \\
+        
+        When I first sent you a picture of my LASSO model I did not have the \texttt{tournament} variable, as well as this other difference: Many of the teams without conference information (not D1 teams) had NA values for home metrics. These teams only played 1 or 2 games during the season, and none of them were at home. The original LASSO kept these values as NA, and the best model had 3 variables. When I moved forward to PCA (which doesn't like NA), I had to replace the NA's with 0. This changed the results of my LASSO to what it is now. This change fascinates me, and I don't have a good reason why it changed. \\
+        
+        \item Use PCA and UMAP to provide a two-dimensional map for all of these variables except conference and tournament participation. Try to interpret the PCA rotations. In the plot, do you see any patterns (e.g. conference? tournament appearance?). Do these reductions work better than the individual vairable alone? Add a dimension reduction feature to your basketball Shiny App.  \\
+        
+        The Dimension Reduction tab on the Basketball Shiny app includes the requested functionality. The principle components are made using all numeric variables in the dataset expect for \texttt{tournament}. The two tables at the bottom show the rotation values and proportion of variance explained by each PC. \\
+        
+        The first 3 principle components are enough to expain more than 95% of the variance in the data. Plotting these components shows a distinct difference between teams with conferences (D1) and teams without conferences (not D1). Because of this distinction, I decided to include an option to filter for D1 teams to see if we could glean any other insights. \\
+        
+        When the filter is selected, the whole PCA is run again with the dataset filtered for teams that have conferene values. Again, the first three PCs explains about 95% of the variation in the points. Looking at the plot it is difficult to see any seperation of conferences, but we can see that most NCAA tournament participants are on the left side of the plot. 
+        
+    \end{enumerate}
+
+\end{enumerate}
