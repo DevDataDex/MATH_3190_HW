@@ -1,0 +1,167 @@
+---
+title: "MATH 3190 Homework 8"
+author: "Devin Warner"
+date: 'Due 4/26/2022'
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(umap)
+library(caret)
+library(kernlab)
+library(dendextend)
+library(neuralnet)
+TBnanostring <- readRDS("TBnanostring.rds")
+TBnanostring$TB_Status <- as.factor(TBnanostring$TB_Status)
+```
+
+This homework will focus on unsupervised clustering and dimension reduction, support vector machines, random forests, and neural networks. Please complete your work in Rmarkdown (.html output) and post your work to your GitHub page.
+
+The $\texttt{TBnanostring.rds}$ dataset contains gene expression measurements in the blood for 107 TB-related genes for 179 patients with either active tuberculosis infection (TB) or latent TB infection (LTBI). Load these data into R ($\texttt{TBnanostring <- readRDS(`TBnanostring.rds')}$). The TB status is found in the first column of the data frame, followed by the genes in the subsequent columns, and the rows represent each individual patient. Complete the following analyses:  
+
+
+## Question 1 (20 Points)
+
+Apply a UMAP clustering of the dataset, and plot the result using $\texttt{ggplot}$. Color the points based on TB status. How does UMAP preform in clustering these samples?
+
+```{r q1}
+tb_umap <- umap(TBnanostring[,-1])
+tb_tib <- tibble(TB_Status = TBnanostring$TB_Status, X = tb_umap$layout[,1], Y = tb_umap$layout[,2])
+
+tb_tib %>%
+  ggplot(aes(x = X, y = Y, fill = TB_Status)) +
+  geom_point(cex=3, pch=21) +
+  labs(title = "UMAP Clustering")
+
+```
+
+We see from the UMAP clustering plot above that most patients with active TB have a negative value in the second UMAP variable (Y), and most patients with latent TB infection (LTBI) have a positive Y value. When I knit this document, I noticed that the UMAP plot changed, which indicates that there is some randomness to UMAP. All of the plots though were seperated well on the Y = 0 line. Overall, I would say UMAP does a good job separating the two classes of TB patients. 
+
+
+## Question 2
+
+Use hierarchical clustering for classification and exploration of this dataset. Do the following:
+
+i) Make a dendrogram of the hierarchical clustering result. Color the sample names based on TB status
+
+```{r q2_i}
+hc <- hclust(dist(TBnanostring[,-1]))
+
+dend <- as.dendrogram(hc)
+dend <- set(dend, "labels_cex", .25)
+
+tb_temp <- TBnanostring[rownames(TBnanostring)[order.dendrogram(dend)],1]
+
+labels_colors(dend) <- ifelse(tb_temp == "TB",2,3)
+
+## plot the dendrogram
+plot(dend)
+
+```
+
+
+ii) Cut the tree into 2 clusters. What are the proportions of TB/LTBI samples in each cluster? 
+
+```{r q2_ii}
+groups <- cutree(dend, h = 25)
+
+Cluster_1 <- TBnanostring[names(groups)[groups==1],1]
+Cluster_2 <- TBnanostring[names(groups)[groups==2],1]
+
+summary(Cluster_1)
+summary(Cluster_2)
+
+```
+
+We see from the tables above that Cluster 1 (on the right) has 90% active TB patients, and Cluster 2 has 91% latent TB infection patients. 
+
+iii) Make a clustered heatmap of these data (see the lecture slides). 
+
+```{r q2_iii}
+heatmap(as.matrix(TBnanostring[,-1]), col = RColorBrewer::brewer.pal(11, "Spectral"))
+```
+
+## Question 3 (40 points) 
+
+Split the dataset into "training" and "testing" sets using a 70/30 partition, using $\texttt{set.seed(0)}$ and the $\texttt{createDataPartition}$ function from the $\texttt{caret}$ package (code for this is `hiding' in this .Rmd file!). Apply the following machine learning methods to make a predictive biomarker to distinguish between the TB and control samples. Use the $\texttt{caret}$ package and cross validation to find the "finalModel" parameters to for each method.  
+
+```{r, echo=F, eval=FALSE}
+set.seed(0)
+training_indexs <- createDataPartition(TBnanostring$TB_Status, p = .3, list = F)
+training <- TBnanostring[training_indexs, ]
+testing  <- TBnanostring[-training_indexs, ]
+```
+
+# Support Vector Machine (try linear, radial, and polynomial kernels)
+
+```{r q3_svm_lin}
+## Linear Kernel
+
+tb_svm_lin <- caret::train(TB_Status~.,data = training, method = "svmLinear",
+                           tuneGrid = expand.grid(C = seq(0, 2, length = 20)))
+
+res1 <- as_tibble(tb_svm_lin$results[which.max(tb_svm_lin$results[,2]),])
+plot(tb_svm_lin,main = "SVM with Linear Kernel")
+
+```
+
+```{r q3_svm_rad}
+## Radial Kernel
+
+tb_svm_rad <- caret::train(TB_Status~.,data = training, method = "svmRadial",
+                           tuneLength = 10)
+
+res2 <- as_tibble(tb_svm_rad$results[which.max(tb_svm_rad$results[,2]),])
+plot(tb_svm_rad, main = "SVM with Radial Kernel")
+
+```
+
+```{r q3_svm_pol}
+## Polynomial Kernel
+
+tb_svm_pol <- caret::train(TB_Status~.,data = training, method = "svmPoly",
+                           tuneLength = 4)
+
+res3 <- as_tibble(tb_svm_pol$results[which.max(tb_svm_pol$results[,2]),])
+plot(tb_svm_pol, main = "SVM with Polynomial Kernel")
+
+```
+
+# Random Forest 
+
+```{r q3_rf}
+nodesize <- seq(1, 51, 10)
+
+acc <- sapply(nodesize, function(ns){
+  train(TB_Status ~ ., data = training, method = "rf", tuneGrid = data.frame(mtry = 2),
+               nodesize = ns)$results$Accuracy
+})
+
+qplot(nodesize, acc)
+
+```
+
+# Feedforward Perceptron Neural Network
+
+```{r q3_nn}
+
+tb_nn <- caret::train(TB_Status ~ ., data = training,
+                      method = "nnet", linout = TRUE,
+                         trace = FALSE)
+
+plot(tb_nn)
+
+ps <- predict(tb_nn, training)
+confusionMatrix(ps, training$TB_Status)$overall["Accuracy"]
+```
+    
+## Question 4 (20 points) 
+
+Compare the overall accuracy of the prediction methods for each of the machine learning tools in the previous problem. Which one performs the best?  
+
+
+

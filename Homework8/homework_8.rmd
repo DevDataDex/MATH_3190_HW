@@ -3,7 +3,8 @@ title: "MATH 3190 Homework 8"
 author: "Supervised and Unsupervised Machine Learning"
 date: "Due 4/26/2022"
 output: pdf_document
-
+editor_options: 
+  chunk_output_type: console
 ---
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
