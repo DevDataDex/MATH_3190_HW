@@ -14,6 +14,7 @@ library(umap)
 library(caret)
 library(kernlab)
 library(dendextend)
+library(randomForest)
 library(neuralnet)
 TBnanostring <- readRDS("TBnanostring.rds")
 TBnanostring$TB_Status <- as.factor(TBnanostring$TB_Status)
@@ -24,7 +25,7 @@ This homework will focus on unsupervised clustering and dimension reduction, sup
 The $\texttt{TBnanostring.rds}$ dataset contains gene expression measurements in the blood for 107 TB-related genes for 179 patients with either active tuberculosis infection (TB) or latent TB infection (LTBI). Load these data into R ($\texttt{TBnanostring <- readRDS(`TBnanostring.rds')}$). The TB status is found in the first column of the data frame, followed by the genes in the subsequent columns, and the rows represent each individual patient. Complete the following analyses:  
 
 
-## Question 1 (20 Points)
+# Question 1 (20 Points)
 
 Apply a UMAP clustering of the dataset, and plot the result using $\texttt{ggplot}$. Color the points based on TB status. How does UMAP preform in clustering these samples?
 
@@ -42,7 +43,7 @@ tb_tib %>%
 We see from the UMAP clustering plot above that most patients with active TB have a negative value in the second UMAP variable (Y), and most patients with latent TB infection (LTBI) have a positive Y value. When I knit this document, I noticed that the UMAP plot changed, which indicates that there is some randomness to UMAP. All of the plots though were seperated well on the Y = 0 line. Overall, I would say UMAP does a good job separating the two classes of TB patients. 
 
 
-## Question 2
+# Question 2
 
 Use hierarchical clustering for classification and exploration of this dataset. Do the following:
 
@@ -85,24 +86,24 @@ iii) Make a clustered heatmap of these data (see the lecture slides).
 heatmap(as.matrix(TBnanostring[,-1]), col = RColorBrewer::brewer.pal(11, "Spectral"))
 ```
 
-## Question 3 (40 points) 
+# Question 3 (40 points) 
 
 Split the dataset into "training" and "testing" sets using a 70/30 partition, using $\texttt{set.seed(0)}$ and the $\texttt{createDataPartition}$ function from the $\texttt{caret}$ package (code for this is `hiding' in this .Rmd file!). Apply the following machine learning methods to make a predictive biomarker to distinguish between the TB and control samples. Use the $\texttt{caret}$ package and cross validation to find the "finalModel" parameters to for each method.  
 
-```{r, echo=F, eval=FALSE}
+```{r q3_init}
 set.seed(0)
-training_indexs <- createDataPartition(TBnanostring$TB_Status, p = .3, list = F)
+training_indexs <- createDataPartition(TBnanostring$TB_Status, p = .7, list = F)
 training <- TBnanostring[training_indexs, ]
 testing  <- TBnanostring[-training_indexs, ]
 ```
 
-# Support Vector Machine (try linear, radial, and polynomial kernels)
+## Support Vector Machine (try linear, radial, and polynomial kernels)
 
 ```{r q3_svm_lin}
 ## Linear Kernel
 
 tb_svm_lin <- caret::train(TB_Status~.,data = training, method = "svmLinear",
-                           tuneGrid = expand.grid(C = seq(0, 2, length = 20)))
+                           tuneGrid = expand.grid(C = seq(0.05, 2, length = 20)))
 
 res1 <- as_tibble(tb_svm_lin$results[which.max(tb_svm_lin$results[,2]),])
 plot(tb_svm_lin,main = "SVM with Linear Kernel")
@@ -131,37 +132,83 @@ plot(tb_svm_pol, main = "SVM with Polynomial Kernel")
 
 ```
 
-# Random Forest 
+```{r q3_res, echo = FALSE}
+tibble(Kernel = c("Linear", "Radial", "Polynomial"), Cost = c(res1$C, res2$C, res3$C),
+       Kappa = c(res1$Kappa, res2$Kappa, res3$Kappa),
+       Accuracy = c(res1$Accuracy, res2$Accuracy, res3$Accuracy), Degree = c(NA,NA,res3$degree))
+```
+
+Listed in the table above are the "Final Model" parameters for each SVM method. Parameters were selected from the cross validated models that had the best training accuracy. Of the three Support Vector Machine kernel types, Radial appears to perform the best. 
+
+## Random Forest 
 
 ```{r q3_rf}
 nodesize <- seq(1, 51, 10)
 
 acc <- sapply(nodesize, function(ns){
-  train(TB_Status ~ ., data = training, method = "rf", tuneGrid = data.frame(mtry = 2),
+  caret::train(TB_Status ~ ., data = training, method = "rf", tuneGrid = data.frame(mtry = 2),
                nodesize = ns)$results$Accuracy
 })
 
-qplot(nodesize, acc)
+qplot(nodesize, acc, main = "Random Forest Accuracy (Changing nodesize)")
 
 ```
 
-# Feedforward Perceptron Neural Network
+We see from the chart above that our Random Forest works best with a nodesize of about 41. Moving forward, we will keep this parameter fixed and cross validate with mtry. 
+
+```{r q3_rf_mtry}
+mtry <- seq(2,20,1)
+
+acc2 <- sapply(mtry, function(m){
+  caret::train(TB_Status ~ ., data = training, method = "rf", tuneGrid = data.frame(mtry = m),
+               nodesize = nodesize[which.max(acc)])$results$Accuracy
+})
+
+qplot(mtry, acc2, main = "Random Forest Accuracy (Changing mtry)")
+
+```
+
+From this plot we see that an mtry of 7 (may change based on randomness) gives us the best prediction accuracy. We will define a final random forest model with nodesize = 41 and mtry = 12. 
+
+```{r q3_rf_final}
+
+tb_rf <- randomForest::randomForest(TB_Status~., data = TBnanostring,
+                                    mtry = which.max(acc2) + 1, nodesize = nodesize[which.max(acc)],
+                                    ntree = 500)
+
+```
+
+## Feedforward Perceptron Neural Network
 
 ```{r q3_nn}
 
 tb_nn <- caret::train(TB_Status ~ ., data = training,
-                      method = "nnet", linout = TRUE,
-                         trace = FALSE)
+                      method = "nnet", trace = FALSE)
 
 plot(tb_nn)
 
 ps <- predict(tb_nn, training)
 confusionMatrix(ps, training$TB_Status)$overall["Accuracy"]
+
 ```
     
-## Question 4 (20 points) 
+From the graph above, we see that a neural net works best with 3 layer of hidden neurons and a weight decay of 0.1. The Neural Net model has a training accuracy of 0.99.    
+    
+# Question 4 (20 points) 
 
 Compare the overall accuracy of the prediction methods for each of the machine learning tools in the previous problem. Which one performs the best?  
 
+```{r q4}
+test_acc_svm_lin <- sum(predict(tb_svm_lin, testing) == testing$TB_Status) / nrow(testing)
+test_acc_svm_rad <- sum(predict(tb_svm_rad, testing) == testing$TB_Status) / nrow(testing)
+test_acc_svm_pol <- sum(predict(tb_svm_pol, testing) == testing$TB_Status) / nrow(testing)
+test_acc_rf <- sum(predict(tb_rf, testing) == testing$TB_Status) / nrow(testing)
+test_acc_nn <- sum(predict(tb_nn, testing) == testing$TB_Status) / nrow(testing)
+
+tibble(Model = c("SVM Linear", "SVM Radial", "SVM Polynomial", "Random Forest", "Neural Net"),
+       "Testing_Accuracy" = c(test_acc_svm_lin, test_acc_svm_rad, test_acc_svm_pol, test_acc_rf,test_acc_nn)) %>% arrange(-Testing_Accuracy)
+
+```
 
 
+We see from the table above that our Random Forest model performs best for predicting the test data. It is followed by SVM Radial. 
